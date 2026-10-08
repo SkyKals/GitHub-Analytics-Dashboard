@@ -1,7 +1,26 @@
 # GitHub Analytics Dashboard
 
-An educational project for analyzing GitHub data as part of component-oriented programming laboratory work.
+Навчальний проєкт із компонентно-орієнтованого програмування, варіант 10 — GitHub.
 
-The application has not been created yet. Technologies, features, and dependencies will be determined from the original Lab 01 assignment.
+Наразі реалізовано каркас ЛР1: React, Vite, strict TypeScript, Tailwind CSS і спільний `DashboardLayout`, який приймає вміст через `children`. Головна сторінка містить український заголовок. Віджети належать до наступних задач лабораторної роботи.
 
-Installation, startup, and verification commands, along with usage instructions, will be added after the application is created. There is currently no `package.json`.
+## Запуск
+
+Потрібні npm і Node.js 20.19+ у гілці 20, 22.13+ у гілці 22 або 24+. Версії залежностей зафіксовано в `package-lock.json`.
+
+```sh
+npm ci
+npm run dev
+```
+
+Відкрийте локальну адресу, яку виведе Vite, зазвичай `http://localhost:5173`.
+
+## Перевірка
+
+```sh
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Збірка записується в `dist/`. Згенеровані файли й локальні документи `.ai/` не входять до репозиторію.
