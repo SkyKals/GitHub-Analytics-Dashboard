@@ -1,6 +1,7 @@
 import Counter from './components/Counter'
 import DashboardLayout from './components/DashboardLayout'
 import KpiCard from './components/KpiCard'
+import Toggle from './components/Toggle'
 import { repositories } from './data/repositories'
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
         <KpiCard title="Репозиторії" value={repositories.length} change="+0.0%" />
       </section>
       <Counter initialValue={0} />
+      <Toggle />
     </DashboardLayout>
   )
 }
