@@ -1,21 +1,28 @@
 # GitHub Analytics Dashboard
 
-Навчальний проєкт із компонентно-орієнтованого програмування, варіант 10 — GitHub.
+An educational project for component-oriented programming, variant 10 — GitHub.
 
-Наразі реалізовано каркас ЛР1: React, Vite, strict TypeScript, Tailwind CSS і спільний `DashboardLayout`, який приймає вміст через `children`. Головна сторінка містить український заголовок. Віджети належать до наступних задач лабораторної роботи.
+The Lab 01 dashboard uses React, Vite, strict TypeScript, and Tailwind CSS. Its Ukrainian interface demonstrates four independent widgets composed through `DashboardLayout` and its `children` prop:
 
-## Запуск
+- Three reusable KPI cards show 330 stars, 60 forks, and 6 repositories. Percentage changes are fixed demonstration values.
+- A counter starts at 0, supports increment/decrement (including negative values), and resets to its initial value.
+- A toggle switches only its own section between light and dark modes.
+- A language filter shows two repositories for each of TypeScript, JavaScript, and Python; `Усі` restores all six in their original order.
 
-Потрібні npm і Node.js 20.19+ у гілці 20, 22.13+ у гілці 22 або 24+. Версії залежностей зафіксовано в `package-lock.json`.
+All repository records are fictional local mock data in `src/data/repositories.ts`, passed to widgets through props. Interactive state stays inside each widget; filtering does not change the KPI totals. There are no GitHub API requests, credentials, or live data. Reloading the page restores the initial widget state.
+
+## Installation and startup
+
+Use npm and a Node.js version matching `package.json`: `^20.19.0 || ^22.13.0 || >=24`. Dependency versions are locked in `package-lock.json`. Run these commands from the repository root:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Відкрийте локальну адресу, яку виведе Vite, зазвичай `http://localhost:5173`.
+Open the local URL printed by Vite, usually `http://localhost:5173`. Stop the development server with `Ctrl+C` before rerunning `npm ci`, so Windows can release native dependency files.
 
-## Перевірка
+## Verification
 
 ```sh
 npm run lint
@@ -23,4 +30,10 @@ npm run typecheck
 npm run build
 ```
 
-Збірка записується в `dist/`. Згенеровані файли й локальні документи `.ai/` не входять до репозиторію.
+`lint` runs ESLint, `typecheck` runs the TypeScript project checks, and `build` checks types and produces the production bundle in `dist/`. There is no automated test suite or `test` script.
+
+With the development server running, check the page at desktop (approximately 1280px) and narrow (375px) widths. Content should remain readable without horizontal page scrolling, and `Tab` should reveal focus on all buttons and the select. Use `Enter` or `Space` for buttons and the arrow keys for the language select.
+
+Verify the counter sequence `+`, `+`, `−` produces 1, reset produces 0, and decrement afterward produces −1. Two toggle activations should restore light mode. Each language should show its two matching records; `Усі` should restore all six. Counter, toggle, and filter interactions should remain independent, with KPI totals fixed at 330/60/6 and no application console errors.
+
+Generated files and local `.ai/` documents are excluded from Git.
