@@ -1,5 +1,5 @@
 import { useId, useState } from 'react'
-import type { Repository } from '../types/Repository'
+import type { Repository } from '../model/Repository'
 
 type FilteredListProps = {
   repositories: readonly Repository[]

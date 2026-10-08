@@ -1,11 +1,11 @@
-import Counter from './components/Counter'
-import DashboardLayout from './components/DashboardLayout'
-import FilteredList from './components/FilteredList'
-import KpiCard from './components/KpiCard'
-import Toggle from './components/Toggle'
-import { repositories } from './data/repositories'
+import DashboardLayout from '../../components/layout/DashboardLayout'
+import Counter from '../../components/widgets/Counter'
+import KpiCard from '../../components/widgets/KpiCard'
+import Toggle from '../../components/widgets/Toggle'
+import FilteredList from '../../features/repositories/components/FilteredList'
+import { repositories } from '../../features/repositories/data/repositories.mock'
 
-export default function App() {
+export default function DashboardPage() {
   const totalStars = repositories.reduce((total, repository) => total + repository.stars, 0)
   const totalForks = repositories.reduce((total, repository) => total + repository.forks, 0)
 

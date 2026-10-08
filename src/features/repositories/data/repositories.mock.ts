@@ -1,4 +1,4 @@
-import type { Repository } from '../types/Repository'
+import type { Repository } from '../model/Repository'
 
 export const repositories: readonly Repository[] = [
   { id: 1, name: 'dashboard-core', language: 'TypeScript', stars: 100, forks: 20 },
