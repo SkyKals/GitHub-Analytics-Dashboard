@@ -1,3 +1,4 @@
+import Counter from './components/Counter'
 import DashboardLayout from './components/DashboardLayout'
 import KpiCard from './components/KpiCard'
 import { repositories } from './data/repositories'
@@ -21,6 +22,7 @@ export default function App() {
         <KpiCard title="Усього форків" value={totalForks} change="+1.5%" />
         <KpiCard title="Репозиторії" value={repositories.length} change="+0.0%" />
       </section>
+      <Counter initialValue={0} />
     </DashboardLayout>
   )
 }
