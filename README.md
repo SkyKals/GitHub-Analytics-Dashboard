@@ -9,7 +9,9 @@ The Lab 01 dashboard uses React, Vite, strict TypeScript, and Tailwind CSS. Its 
 - A toggle switches only its own section between light and dark modes.
 - A language filter shows two repositories for each of TypeScript, JavaScript, and Python; `Усі` restores all six in their original order.
 
-All repository records are fictional local mock data in `src/data/repositories.ts`, passed to widgets through props. Interactive state stays inside each widget; filtering does not change the KPI totals. There are no GitHub API requests, credentials, or live data. Reloading the page restores the initial widget state.
+All repository records are fictional local mock data in `src/features/repositories/data/repositories.mock.ts`, passed to widgets through props. Interactive state stays inside each widget; filtering does not change the KPI totals. There are no GitHub API requests, credentials, or live data. Reloading the page restores the initial widget state.
+
+The dashboard uses `lucide-react` for imported GitHub, repository, and control icons. Decorative icons are hidden from assistive technology; button names and Ukrainian labels remain available to keyboard and screen-reader users.
 
 ## Installation and startup
 

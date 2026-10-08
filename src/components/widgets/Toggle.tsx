@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Moon } from 'lucide-react'
 
 export default function Toggle() {
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -6,7 +7,7 @@ export default function Toggle() {
   return (
     <section
       aria-label="Оформлення секції"
-      className={`rounded-2xl border p-6 ${
+      className={`rounded-2xl border p-6 shadow-sm ${
         isDarkMode
           ? 'border-slate-700 bg-slate-900 text-slate-50'
           : 'border-slate-200 bg-white text-slate-900'
@@ -25,8 +26,9 @@ export default function Toggle() {
             ? 'border-slate-500 bg-slate-700 text-slate-50 hover:bg-slate-600'
             : 'border-slate-300 bg-white text-slate-900 hover:bg-slate-100'
         }`}
-      >
-        Темний режим
+        >
+          <Moon size={18} aria-hidden="true" />
+          <span className="ml-2">Темний режим</span>
       </button>
     </section>
   )

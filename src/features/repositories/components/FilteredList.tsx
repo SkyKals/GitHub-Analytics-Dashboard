@@ -15,7 +15,7 @@ export default function FilteredList({ repositories }: FilteredListProps) {
     : repositories.filter((repository) => repository.language === selectedLanguage)
 
   return (
-    <section aria-label="Список репозиторіїв" className="rounded-2xl border border-slate-200 bg-white p-6">
+    <section aria-label="Список репозиторіїв" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-slate-900">Список репозиторіїв</h2>
       <label htmlFor={selectId} className="mt-4 block font-medium text-slate-900">
         Мова програмування
