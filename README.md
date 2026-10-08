@@ -1,30 +1,23 @@
-# GitHub Analytics Dashboard
+# Панель аналітики GitHub
 
-An educational project for component-oriented programming, variant 10 — GitHub.
+Навчальний проєкт з компонентно-орієнтованого програмування. Лабораторна робота №1, варіант 10 — GitHub.
 
-The Lab 01 dashboard uses React, Vite, strict TypeScript, and Tailwind CSS. Its Ukrainian interface demonstrates four independent widgets composed through `DashboardLayout` and its `children` prop:
+## Мета ЛР1
 
-- Three reusable KPI cards show 330 stars, 60 forks, and 6 repositories. Percentage changes are fixed demonstration values.
-- A counter starts at 0, supports increment/decrement (including negative values), and resets to its initial value.
-- A toggle switches only its own section between light and dark modes.
-- A language filter shows two repositories for each of TypeScript, JavaScript, and Python; `Усі` restores all six in their original order.
+Створити каркас майбутньої панелі аналітики GitHub і відпрацювати декомпозицію інтерфейсу на компоненти, передавання даних через props, локальний стан `useState` та обробку подій.
 
-All repository records are fictional local mock data in `src/features/repositories/data/repositories.mock.ts`, passed to widgets through props. Interactive state stays inside each widget; filtering does not change the KPI totals. There are no GitHub API requests, credentials, or live data. Reloading the page restores the initial widget state.
+## Вимоги та запуск
 
-The dashboard uses `lucide-react` for imported GitHub, repository, and control icons. Decorative icons are hidden from assistive technology; button names and Ukrainian labels remain available to keyboard and screen-reader users.
-
-## Installation and startup
-
-Use npm and a Node.js version matching `package.json`: `^20.19.0 || ^22.13.0 || >=24`. Dependency versions are locked in `package-lock.json`. Run these commands from the repository root:
+Потрібні Node.js версії `^20.19.0 || ^22.13.0 || >=24` і npm. Версії залежностей зафіксовано в `package-lock.json`.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite, usually `http://localhost:5173`. Stop the development server with `Ctrl+C` before rerunning `npm ci`, so Windows can release native dependency files.
+Після запуску відкрийте адресу, яку виведе Vite (зазвичай `http://localhost:5173`). На Windows перед повторним `npm ci` зупиніть сервер розробки через `Ctrl+C`, щоб звільнити файли залежностей.
 
-## Verification
+## Перевірка
 
 ```sh
 npm run lint
@@ -32,10 +25,37 @@ npm run typecheck
 npm run build
 ```
 
-`lint` runs ESLint, `typecheck` runs the TypeScript project checks, and `build` checks types and produces the production bundle in `dist/`. There is no automated test suite or `test` script.
+- `lint` запускає ESLint;
+- `typecheck` виконує перевірку TypeScript;
+- `build` перевіряє типи та створює production-збірку в `dist/`.
 
-With the development server running, check the page at desktop (approximately 1280px) and narrow (375px) widths. Content should remain readable without horizontal page scrolling, and `Tab` should reveal focus on all buttons and the select. Use `Enter` or `Space` for buttons and the arrow keys for the language select.
+Окремого тестового фреймворку або скрипту `test` у ЛР1 немає.
 
-Verify the counter sequence `+`, `+`, `−` produces 1, reset produces 0, and decrement afterward produces −1. Two toggle activations should restore light mode. Each language should show its two matching records; `Усі` should restore all six. Counter, toggle, and filter interactions should remain independent, with KPI totals fixed at 330/60/6 and no application console errors.
+## Реалізовані віджети
 
-Generated files and local `.ai/` documents are excluded from Git.
+- **KPI-картки** — три повторно використовувані картки показують сумарні зірки, форки та кількість репозиторіїв.
+- **Counter** — лічильник починається з `0`, підтримує збільшення, зменшення (зокрема до від’ємних значень) і скидання до початкового значення.
+- **Toggle** — перемикає лише власну секцію між світлим і темним режимами.
+- **Filtered List** — фільтрує список репозиторіїв за мовою програмування та відновлює повний початковий порядок за вибору `Усі`.
+
+Дані — локальний незмінний mock-масив у `src/features/repositories/data/repositories.mock.ts`: по два репозиторії для TypeScript, JavaScript і Python. KPI обчислюються з цього набору й дорівнюють **330 / 60 / 6**: зірки, форки, репозиторії відповідно. Фільтр не впливає на KPI; стан кожного інтерактивного віджета є незалежним і локальним. Після перезавантаження сторінки відновлюється початковий стан.
+
+## Структура відповідальностей
+
+- `DashboardPage` з’єднує mock-дані, селектори KPI та компоненти сторінки.
+- `DashboardLayout` забезпечує спільне компонування через `children`.
+- `KpiCard`, `Counter` і `Toggle` є окремими віджетами.
+- feature `repositories` містить контракт репозиторію, mock-дані, селектори, `FilteredList` і елемент списку репозиторію.
+
+## Ручна перевірка для захисту
+
+1. Запустіть застосунок, перевірте вигляд приблизно за ширин 1280px і 375px: текст має лишатися читабельним без горизонтального прокручування сторінки.
+2. Перейдіть клавішею `Tab` до всіх кнопок і списку вибору; для кнопок використайте `Enter` або `Space`, для списку — клавіші зі стрілками.
+3. Натисніть у лічильнику `+`, `+`, `−`: має бути `1`; скиньте — `0`; після `−` має бути `−1`.
+4. Двічі активуйте Toggle: секція має повернутися до світлого режиму.
+5. Перевірте кожну мову: відображаються два відповідні репозиторії; `Усі` повертає всі шість у початковому порядку.
+6. Переконайтеся, що взаємодії Counter, Toggle і фільтра незалежні, KPI залишаються `330 / 60 / 6`, а в консолі браузера немає помилок застосунку.
+
+## Межі ЛР1
+
+ЛР1 не містить GitHub API, облікових даних, реальних даних, роутингу, графіків, Zustand або можливостей наступних лабораторних робіт.
