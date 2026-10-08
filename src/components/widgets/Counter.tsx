@@ -51,7 +51,7 @@ export default function Counter({ initialValue }: CounterProps) {
           type="button"
           aria-label="Скинути лічильник"
           onClick={handleReset}
-          className="min-h-11 rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-900 hover:bg-slate-100"
+          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-900 hover:bg-slate-100"
         >
           <RotateCcw size={18} aria-hidden="true" />
           <span className="ml-2">Скинути</span>

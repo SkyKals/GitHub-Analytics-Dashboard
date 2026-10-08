@@ -21,7 +21,7 @@ export default function Toggle() {
         type="button"
         aria-pressed={isDarkMode}
         onClick={() => setIsDarkMode((currentMode) => !currentMode)}
-        className={`mt-6 min-h-11 rounded-lg border px-4 py-2 font-medium ${
+          className={`mt-6 inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 font-medium ${
           isDarkMode
             ? 'border-slate-500 bg-slate-700 text-slate-50 hover:bg-slate-600'
             : 'border-slate-300 bg-white text-slate-900 hover:bg-slate-100'
