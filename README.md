@@ -1,140 +1,127 @@
-# Панель аналітики GitHub
+# GitHub Analytics Dashboard — Лабораторна робота №2
 
-Навчальний проєкт з компонентно-орієнтованого програмування. Лабораторна робота №1, варіант 10 — GitHub.
+Поточна гілка `lab-02` містить реалізацію лабораторної роботи №2 з компонентно-орієнтованого програмування. Дашборд завантажує публічні репозиторії організації `github` через GitHub REST API та показує їх у таблиці з фільтрацією, сортуванням і KPI.
 
-## Мета ЛР1
+## Запуск локально
 
-Створити каркас майбутньої панелі аналітики GitHub і відпрацювати декомпозицію інтерфейсу на компоненти, передавання даних через props, локальний стан `useState` та обробку подій.
-
-## Вимоги та запуск
-
-Потрібні Node.js версії `^20.19.0 || ^22.13.0 || >=24` і npm. Версії залежностей зафіксовано в `package-lock.json`.
+Вимоги: Node.js `^20.19.0 || ^22.13.0 || >=24` та npm.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Після запуску відкрийте адресу, яку виведе Vite (зазвичай `http://localhost:5173`). На Windows перед повторним `npm ci` зупиніть сервер розробки через `Ctrl+C`, щоб звільнити файли залежностей.
+Відкрийте Vite URL, показаний у терміналі, зазвичай `http://localhost:5173`.
+
+## Відповідність завданню Lab 2
+
+Цей розділ є коротким чеклістом для захисту й фіксує вимоги разом із файлами, де їх реалізовано.
+
+### Завантаження даних
+
+- На першому рендері `DashboardPage` ініціалізує `repositories` через `useState` і запускає запит усередині `useEffect` — [DashboardPage.tsx](src/pages/dashboard/DashboardPage.tsx:44).
+- Effect викликає [fetchOrganizationRepositories.ts](src/features/repositories/api/fetchOrganizationRepositories.ts:108), а отриманий масив зберігається через `setRepositories`; presentation-компоненти самі API не викликають.
+- Фактичний endpoint: `GET https://api.github.com/orgs/github/repos?type=public&sort=full_name&direction=asc&per_page=100&page=1`. Заголовки `Accept` і `X-GitHub-Api-Version` задані в [fetchOrganizationRepositories.ts](src/features/repositories/api/fetchOrganizationRepositories.ts:6).
+- Network, HTTP та invalid-response помилки нормалізуються в API-модулі. Cleanup effect використовує `AbortController`, а скасовані й застарілі запити не оновлюють стан.
+
+### Стани запиту
+
+- `loading` — запит виконується; показується [LoadingState.tsx](src/components/feedback/LoadingState.tsx), без таблиці та числових KPI.
+- `error` — запит завершився мережевою, HTTP або помилкою відповіді; показується [ErrorState.tsx](src/components/feedback/ErrorState.tsx) із ручним Retry.
+- `empty` — успішна відповідь містить порожній масив; показується [EmptyState.tsx](src/components/feedback/EmptyState.tsx) і нульові KPI.
+- `success` — отримано дані; показуються таблиця та KPI. Пріоритет станів обчислює `getRequestState` у `DashboardPage`.
+
+### Таблиця та сортування
+
+[RepositoryTable.tsx](src/features/repositories/components/table/RepositoryTable.tsx) показує рівно п’ять полів: повну назву репозиторію з посиланням на GitHub, мову, зірки, fork-и та числовий ID.
+
+Сортування в [sortRepositories.ts](src/features/repositories/model/sortRepositories.ts) підтримує два поля — назву та зірки — і напрямки `asc`/`desc`. Під час рендера `DashboardPage` спочатку формує фільтровану вибірку, а потім отримує derived array через `sortRepositories`; функція працює з копією `[...repositories]` і не мутує вихідний масив або його записи.
+
+### KPI з реальних API-даних
+
+[RepositoryKpis.tsx](src/pages/dashboard/components/RepositoryKpis.tsx) та [KpiCard.tsx](src/components/widgets/KpiCard.tsx) відображають дані, обчислені з реальної відповіді GitHub: загальні зірки, загальні fork-и та кількість репозиторіїв. KPI рахуються по всій завантаженій вибірці, тому фільтр мови й сортування їх не змінюють.
+
+## Потік роботи Lab 2
+
+`DashboardPage` — контейнерний компонент. За допомогою `useState` він зберігає завантажені репозиторії, стани завантаження та помилки, вибрану мову, конфігурацію сортування і лічильник повторної спроби. Єдиним місцем виклику `fetchOrganizationRepositories` є його `useEffect`:
+
+1. Effect запитує першу сторінку з максимум 100 публічних репозиторіїв організації `github`.
+2. API-модуль перевіряє та нормалізує відповідь, зокрема перетворює `language: null` на `Не вказано`.
+3. Сторінка показує один із чотирьох станів: завантаження, помилка, успішна порожня відповідь або успішне завантаження з таблицею та KPI.
+4. Повторна спроба очищає помилку і змінює лічильник retry, що запускає effect повторно. Під час cleanup запит скасовується через `AbortController`; скасовані або застарілі запити не змінюють інтерфейс.
+
+Запит:
+
+```text
+GET https://api.github.com/orgs/github/repos?type=public&sort=full_name&direction=asc&per_page=100&page=1
+Accept: application/vnd.github+json
+X-GitHub-Api-Version: 2026-03-10
+```
+
+Токен, пагінація та вибір організації не використовуються. Окремо обробляються network, HTTP, некоректний JSON та невалідна відповідь. Якщо GitHub повертає коректні rate-limit заголовки, показується час наступної спроби. Звичайна HTTP 403 не вважається rate-limit помилкою автоматично.
+
+## Поведінка дашборда
+
+- Таблиця містить повну назву репозиторію з посиланням на GitHub, мову, кількість зірок, кількість fork-ів і числовий ID. Для кожного рядка використовується `repository.id` як React key.
+- Dropdown мови відкривається вниз, підтримує Enter/Space, Arrow Up/Down та Escape і використовує `role="listbox"` та `role="option"`. Фільтрація виконується лише по вже завантаженій вибірці та не запускає нових запитів.
+- Заголовки Назва та Зірки є клавіатурно доступними кнопками з `aria-sort`. Для активного поля напрямок перемикається між зростанням і спаданням; вибір іншого поля починається зі зростання. Назва сортується без врахування регістру та з числовим порівнянням, а при однакових значеннях використовується ID за зростанням. Сортування повертає копію і не змінює початкові записи.
+- KPI показують загальну кількість зірок, загальну кількість fork-ів і кількість репозиторіїв у повній завантаженій вибірці. Фільтрація та сортування не змінюють KPI.
+- Стани loading, error, empty і success відображаються окремо. Counter і Toggle залишаються незалежними компонентами лабораторної роботи №1.
+
+## Файли для захисту
+
+На захисті послідовно показати:
+
+- `DashboardPage.tsx` — `useEffect`/`useState`, request states, retry, filter і derived sorting.
+- `fetchOrganizationRepositories.ts` — URL, headers, нормалізацію GitHub-відповіді, помилки та `AbortController` signal.
+- `RepositoryTable.tsx` — п’ять полів, links, `repository.id` як key та `aria-sort`.
+- `sortRepositories.ts` — два поля, `asc/desc`, копію та незмінюваність.
+- `RepositoryKpis.tsx` і `KpiCard.tsx` — три KPI з повної API-вибірки без демонстраційних відсотків.
+- `LoadingState.tsx`, `ErrorState.tsx`, `EmptyState.tsx` — feedback-компоненти для `loading/error/empty`; success видно в `DashboardPage` разом із таблицею.
+- Файли в [tests/](tests/) — API, стани запиту, сортування, незмінюваність і KPI.
+
+Основні файли Lab 2:
+
+- [DashboardPage](src/pages/dashboard/DashboardPage.tsx) — контейнер, state, effect, retry, інтеграція фільтра і сортування.
+- [fetchOrganizationRepositories](src/features/repositories/api/fetchOrganizationRepositories.ts) — API-запит, перевірка, нормалізація, помилки та скасування.
+- [GitHubRepository](src/features/repositories/model/GitHubRepository.ts) — тип даних репозиторію.
+- [RepositoryTable](src/features/repositories/components/table/RepositoryTable.tsx) — доступна таблиця з п’ятьма колонками.
+- [sortRepositories](src/features/repositories/model/sortRepositories.ts) — незмінюване сортування за назвою та зірками.
+- [LanguageFilter](src/pages/dashboard/components/LanguageFilter.tsx) — доступний клієнтський dropdown.
+- [RepositoryKpis](src/pages/dashboard/components/RepositoryKpis.tsx) — композиція KPI дашборда.
+- [KpiCard](src/components/widgets/KpiCard.tsx) — перевикористовувана картка KPI з необов’язковим `change`.
+- [LoadingState](src/components/feedback/LoadingState.tsx), [ErrorState](src/components/feedback/ErrorState.tsx), [EmptyState](src/components/feedback/EmptyState.tsx) — компоненти станів запиту.
+- [Тести](tests/) — перевірки API, станів запиту, сортування, незмінюваності та KPI.
+
+Відповідність критеріям:
+
+- **C01** — контейнер і API: `DashboardPage` володіє state та API-потоком через `useEffect`.
+- **C02** — таблиця: `RepositoryTable` відображає п’ять обов’язкових полів і посилання на репозиторії.
+- **C03** — стани та KPI: feedback-компоненти й `RepositoryKpis` покривають loading/error/empty/success і підсумки повної вибірки.
+- **C04** — сортування: `sortRepositories` підтримує обидва напрямки, числове порівняння назв без врахування регістру, tie-break і відсутність мутації.
+- **C05** — розділення контейнера й представлення, TypeScript-контракти, стабільні ключі, readonly-входи та незмінювані похідні масиви.
+
+Файл mock-даних `src/features/repositories/data/repositories.mock.ts` та старі list-компоненти залишені як історичні матеріали Lab 1. Вони вимкнені й не підключені до активного дашборда Lab 2.
 
 ## Перевірка
 
 ```sh
+node --experimental-strip-types --test tests/*.test.ts
 npm run lint
 npm run typecheck
 npm run build
+git diff --check
 ```
 
-- `lint` запускає ESLint;
-- `typecheck` виконує перевірку TypeScript;
-- `build` перевіряє типи та створює production-збірку в `dist/`.
+Тести перевіряють API-заголовки та нормалізацію, `language: null`, HTTP/network/invalid-response/abort сценарії, пріоритет станів запиту, сортування в обох напрямках, tie-break, незмінюваність і KPI.
 
-Окремого тестового фреймворку або скрипту `test` у ЛР1 немає.
+## Сценарій захисту
 
-## Реалізовані віджети
+1. Запустити проєкт і показати стан завантаження, потім таблицю репозиторіїв і три KPI-картки.
+2. Відкрити dropdown мови вниз; продемонструвати вибір мишкою, Arrow Up/Down, Enter/Space, Escape і видимий focus.
+3. Застосувати фільтр і показати, що KPI залишаються розрахованими по повній вибірці, а новий API-запит не запускається.
+4. Натиснути заголовки Назва та Зірки в обох напрямках; показати `aria-sort`, числове сортування назв без врахування регістру і стабільний порядок однакових значень.
+5. Продемонструвати loading, network/HTTP error з Retry, empty та success стани на контрольованих відповідях.
+6. На ширині 1280px і 375px перевірити адаптивність, горизонтальний scroll лише таблиці, відсутність overflow сторінки та помилок у консолі. Наприкінці показати незалежну роботу Counter і Toggle.
 
-- **[KPI Card](src/components/widgets/KpiCard.tsx)** — a reusable card that receives `title`, `value`, and `change`; [RepositoryKpis](src/pages/dashboard/components/RepositoryKpis.tsx) uses it three times with distinct props for stars, forks, and repositories.
-- **[Counter](src/components/widgets/Counter.tsx)** — uses local `useState` with `+`, `−`, and reset controls.
-- **[Toggle](src/components/widgets/Toggle.tsx)** — uses local state and conditionally renders the section in light or dark mode.
-- **[Filtered List](src/features/repositories/components/FilteredList.tsx)** — selects a category and filters the local repository array; choosing `Усі` returns the full list. The fixture is [repositories.mock.ts](src/features/repositories/data/repositories.mock.ts).
-
-Дані — локальний незмінний mock-масив у `src/features/repositories/data/repositories.mock.ts`: по два репозиторії для TypeScript, JavaScript і Python. KPI обчислюються з цього набору й дорівнюють **330 / 60 / 6**: зірки, форки, репозиторії відповідно. Фільтр не впливає на KPI; стан кожного інтерактивного віджета є незалежним і локальним. Після перезавантаження сторінки відновлюється початковий стан.
-
-## Структура відповідальностей
-
-- `DashboardPage` з’єднує mock-дані, селектори KPI та компоненти сторінки.
-- `DashboardLayout` забезпечує спільне компонування через `children`.
-- `KpiCard`, `Counter` і `Toggle` є окремими віджетами.
-- feature `repositories` містить контракт репозиторію, mock-дані, селектори, `FilteredList` і елемент списку репозиторію.
-
-## Ручна перевірка для захисту
-
-1. Запустіть застосунок, перевірте вигляд приблизно за ширин 1280px і 375px: текст має лишатися читабельним без горизонтального прокручування сторінки.
-2. Перейдіть клавішею `Tab` до всіх кнопок і списку вибору; для кнопок використайте `Enter` або `Space`, для списку — клавіші зі стрілками.
-3. Натисніть у лічильнику `+`, `+`, `−`: має бути `1`; скиньте — `0`; після `−` має бути `−1`.
-4. Двічі активуйте Toggle: секція має повернутися до світлого режиму.
-5. Перевірте кожну мову: відображаються два відповідні репозиторії; `Усі` повертає всі шість у початковому порядку.
-6. Переконайтеся, що взаємодії Counter, Toggle і фільтра незалежні, KPI залишаються `330 / 60 / 6`, а в консолі браузера немає помилок застосунку.
-
-## Межі ЛР1
-
-ЛР1 не містить GitHub API, облікових даних, реальних даних, роутингу, графіків, Zustand або можливостей наступних лабораторних робіт.
-
-## Файлова структура та призначення
-
-```text
-.
-├── .gitignore                     # Виключає локальні документи, залежності та збірку з Git.
-├── AGENTS.md                      # Правила роботи агентів у репозиторії.
-├── README.md                      # Публічний опис ЛР1, запуску та архітектури.
-├── eslint.config.js               # Правила ESLint для TypeScript і React.
-├── index.html                     # HTML-точка входу Vite.
-├── package.json                   # Залежності, вимоги до Node.js і команди npm.
-├── package-lock.json              # Точно зафіксовані версії npm-залежностей.
-├── tsconfig.json                  # Базова конфігурація TypeScript.
-├── tsconfig.app.json              # Налаштування TypeScript для коду застосунку.
-├── tsconfig.node.json             # Налаштування TypeScript для Vite-конфігурації.
-├── vite.config.ts                 # Конфігурація Vite, React і Tailwind CSS.
-└── src/
-    ├── main.tsx                   # Монтує React-застосунок у DOM та підключає глобальні стилі.
-    ├── app/
-    │   ├── App.tsx                # Кореневий React-компонент; зараз відображає DashboardPage.
-    │   ├── styles.css             # Глобальні стилі та базові правила доступності.
-    │   ├── providers/
-    │   │   └── .gitkeep           # Резерв для глобальних провайдерів майбутніх ЛР; поки не використовується.
-    │   └── router/
-    │       └── .gitkeep           # Резерв для маршрутизації майбутніх ЛР; у ЛР1 роутингу немає.
-    ├── assets/
-    │   └── .gitkeep               # Резерв для статичних зображень, іконок або інших ресурсів.
-    ├── components/
-    │   ├── feedback/
-    │   │   └── .gitkeep           # Резерв для Loading, Error та Empty компонентів наступних ЛР.
-    │   ├── layout/
-    │   │   └── DashboardLayout.tsx # Спільний каркас сторінки; розміщує передані через children блоки.
-    │   └── widgets/
-    │       ├── Counter.tsx         # Локальний лічильник із кнопками збільшення, зменшення та скидання.
-    │       ├── KpiCard.tsx         # Повторно використовувана картка одного KPI-показника.
-    │       └── Toggle.tsx          # Локальний перемикач світлого й темного режиму секції.
-    ├── features/
-    │   ├── analytics/
-    │   │   ├── components/.gitkeep # Резерв для компонентів аналітики та графіків майбутніх ЛР.
-    │   │   └── model/.gitkeep      # Резерв для моделей і обчислень аналітики.
-    │   ├── favorites/
-    │   │   └── components/.gitkeep # Резерв для механізму обраних репозиторіїв.
-    │   ├── repositories/
-    │   │   ├── api/.gitkeep        # Резерв для GitHub API; у ЛР1 зовнішніх запитів немає.
-    │   │   ├── components/
-    │   │   │   ├── details/.gitkeep # Резерв для сторінки або блоку деталей репозиторію.
-    │   │   │   ├── filters/.gitkeep # Резерв для розширених фільтрів наступних ЛР.
-    │   │   │   ├── table/.gitkeep   # Резерв для таблиці репозиторіїв і сортування.
-    │   │   │   ├── FilteredList.tsx # Віджет локально фільтрує репозиторії за мовою.
-    │   │   │   └── RepositoryListItem.tsx # Відображає один репозиторій, отриманий через props.
-    │   │   ├── data/
-    │   │   │   └── repositories.mock.ts # Незмінні локальні mock-дані шести репозиторіїв.
-    │   │   ├── hooks/
-    │   │   │   └── .gitkeep        # Резерв для feature-specific hooks, наприклад useRepositories.
-    │   │   └── model/
-    │   │       ├── Repository.ts   # TypeScript-контракт даних одного репозиторію.
-    │   │       └── selectors.ts    # Чисті функції обчислення суми зірок, форків і кількості репозиторіїв.
-    │   └── theme/
-    │       ├── components/.gitkeep # Резерв для глобального перемикача теми.
-    │       └── context/.gitkeep    # Резерв для ThemeContext; у ЛР1 тема лише локальна в Toggle.
-    ├── hooks/
-    │   └── .gitkeep                # Резерв для загальних hooks, що не належать одній feature.
-    ├── lib/
-    │   └── http/.gitkeep           # Резерв для спільних HTTP-утиліт; у ЛР1 HTTP-запитів немає.
-    ├── pages/
-    │   ├── dashboard/
-    │   │   ├── components/
-    │   │   │   ├── DashboardHeader.tsx # Заголовок і короткий опис дашборду.
-    │   │   │   └── RepositoryKpis.tsx  # Збирає три KpiCard з переданих сумарних значень.
-    │   │   └── DashboardPage.tsx    # Координує дані, селектори, layout та віджети головної сторінки.
-    │   ├── not-found/
-    │   │   └── .gitkeep             # Резерв для сторінки 404 після додавання роутингу.
-    │   └── repository-details/
-    │       └── .gitkeep             # Резерв для майбутньої сторінки деталей репозиторію.
-    └── store/
-        └── .gitkeep                 # Резерв для глобального стану; Zustand у ЛР1 не використовується.
-```
-
-> Файли `.gitkeep` зберігають порожні каталоги в Git. Вони показують заплановане місце для функцій наступних лабораторних робіт, але не означають, що ці функції вже реалізовані. Каталоги `.ai/`, `node_modules/` і `dist/` не показано: це відповідно локальна документація, встановлені залежності та генерована збірка.
+Клавіатурна, focus, консольна, візуальна, адаптивна та мережева перевірки є ручними доказами й не замінюються автоматичними тестами.

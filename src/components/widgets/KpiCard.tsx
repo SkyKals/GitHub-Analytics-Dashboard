@@ -3,7 +3,7 @@ import { BookOpen, GitFork, Star } from 'lucide-react'
 type KpiCardProps = {
   title: string
   value: number
-  change: string
+  change?: string
 }
 
 export default function KpiCard({ title, value, change }: KpiCardProps) {
@@ -20,8 +20,12 @@ export default function KpiCard({ title, value, change }: KpiCardProps) {
       <p className="mt-3 text-4xl font-semibold tabular-nums text-slate-900">
         {value.toLocaleString('uk-UA')}
       </p>
-      <p className="mt-4 text-sm font-medium text-emerald-700">{change}</p>
-      <p className="mt-1 text-sm text-slate-500">Демонстраційне значення зміни</p>
+      {change && (
+        <>
+          <p className="mt-4 text-sm font-medium text-emerald-700">{change}</p>
+          <p className="mt-1 text-sm text-slate-500">Демонстраційне значення зміни</p>
+        </>
+      )}
     </article>
   )
 }
