@@ -33,10 +33,10 @@ npm run build
 
 ## Реалізовані віджети
 
-- **[KPI Card](src/components/widgets/KpiCard.tsx)** — a reusable card that receives `title`, `value`, and `change`; [RepositoryKpis](src/pages/dashboard/components/RepositoryKpis.tsx) uses it three times with distinct props for stars, forks, and repositories.
-- **[Counter](src/components/widgets/Counter.tsx)** — uses local `useState` with `+`, `−`, and reset controls.
-- **[Toggle](src/components/widgets/Toggle.tsx)** — uses local state and conditionally renders the section in light or dark mode.
-- **[Filtered List](src/features/repositories/components/FilteredList.tsx)** — selects a category and filters the local repository array; choosing `Усі` returns the full list. The fixture is [repositories.mock.ts](src/features/repositories/data/repositories.mock.ts).
+- **[KPI Card](src/components/widgets/KpiCard.tsx)** — перевикористовна картка, яка отримує `title`, `value` і `change`; **[RepositoryKpis](src/pages/dashboard/components/RepositoryKpis.tsx)** використовує її тричі з різними props для зірок, форків і кількості репозиторіїв.
+- **[Counter](src/components/widgets/Counter.tsx)** — зберігає число в локальному стані `useState`, підтримує кнопки `+`, `−` і скидання до початкового значення.
+- **[Toggle](src/components/widgets/Toggle.tsx)** — використовує локальний стан та умовно відображає власну секцію у світлому або темному режимі.
+- **[Filtered List](src/features/repositories/components/FilteredList.tsx)** — дає змогу вибрати категорію мови через `select` і локально фільтрує масив репозиторіїв; вибір `Усі` повертає повний список у початковому порядку. Дані зберігаються в **[repositories.mock.ts](src/features/repositories/data/repositories.mock.ts)**.
 
 Дані — локальний незмінний mock-масив у `src/features/repositories/data/repositories.mock.ts`: по два репозиторії для TypeScript, JavaScript і Python. KPI обчислюються з цього набору й дорівнюють **330 / 60 / 6**: зірки, форки, репозиторії відповідно. Фільтр не впливає на KPI; стан кожного інтерактивного віджета є незалежним і локальним. Після перезавантаження сторінки відновлюється початковий стан.
 
