@@ -8,8 +8,10 @@ import Toggle from '../../components/widgets/Toggle'
 import RepositoryTable from '../../features/repositories/components/table/RepositoryTable'
 import type { GitHubRepository } from '../../features/repositories/model/GitHubRepository'
 import { GitHubRepositoryError, fetchOrganizationRepositories } from '../../features/repositories/api/fetchOrganizationRepositories'
+import { getRepositoryCount, getTotalForks, getTotalStars } from '../../features/repositories/model/selectors'
 import { sortRepositories, type RepositorySort } from '../../features/repositories/model/sortRepositories'
 import DashboardHeader from './components/DashboardHeader'
+import RepositoryKpis from './components/RepositoryKpis'
 import { getRequestState } from './requestState'
 
 function isAbortError(error: unknown): boolean {
@@ -73,6 +75,9 @@ export default function DashboardPage() {
     : repositories.filter((repository) => repository.language === effectiveLanguage)
   const visibleRepositories = sortRepositories(filteredRepositories, sort)
   const requestState = getRequestState({ loading, error, repositoryCount: repositories.length })
+  const totalStars = getTotalStars(repositories)
+  const totalForks = getTotalForks(repositories)
+  const repositoryCount = getRepositoryCount(repositories)
   const handleRetry = () => {
     setLoading(true)
     setError(null)
@@ -87,6 +92,9 @@ export default function DashboardPage() {
       {requestState === 'loading' && <LoadingState />}
       {requestState === 'error' && error && (
         <ErrorState message={getErrorMessage(error)} retryAt={getRetryAt(error)} onRetry={handleRetry} />
+      )}
+      {(requestState === 'empty' || requestState === 'success') && (
+        <RepositoryKpis totalStars={totalStars} totalForks={totalForks} repositoryCount={repositoryCount} />
       )}
       {requestState === 'empty' && <EmptyState />}
       {requestState === 'success' && (
