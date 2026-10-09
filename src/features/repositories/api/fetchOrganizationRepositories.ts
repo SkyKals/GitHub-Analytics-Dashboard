@@ -60,6 +60,14 @@ function parseRateLimitReset(value: string | null): Date | undefined {
   return new Date(seconds * 1000)
 }
 
+export function createGitHubHttpError(response: Response): GitHubRepositoryError {
+  return new GitHubRepositoryError('http', `GitHub returned HTTP ${response.status}.`, {
+    status: response.status,
+    retryAfterSeconds: parseRetryAfter(response.headers.get('retry-after')),
+    rateLimitResetAt: parseRateLimitReset(response.headers.get('x-ratelimit-reset')),
+  })
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -97,7 +105,7 @@ function normalizeRepository(value: unknown): GitHubRepository {
   }
 }
 
-function normalizeResponse(value: unknown): GitHubRepository[] {
+export function normalizeGitHubRepositoryCollection(value: unknown): GitHubRepository[] {
   if (!Array.isArray(value)) {
     throw new GitHubRepositoryError('invalid-response', 'GitHub returned an invalid repository collection.')
   }
@@ -117,13 +125,7 @@ export async function fetchOrganizationRepositories(signal: AbortSignal): Promis
     throw new GitHubRepositoryError('network', 'The GitHub repository request failed.', { })
   }
 
-  if (!response.ok) {
-    throw new GitHubRepositoryError('http', `GitHub returned HTTP ${response.status}.`, {
-      status: response.status,
-      retryAfterSeconds: parseRetryAfter(response.headers.get('retry-after')),
-      rateLimitResetAt: parseRateLimitReset(response.headers.get('x-ratelimit-reset')),
-    })
-  }
+  if (!response.ok) throw createGitHubHttpError(response)
 
   let payload: unknown
   try {
@@ -132,5 +134,5 @@ export async function fetchOrganizationRepositories(signal: AbortSignal): Promis
     throw new GitHubRepositoryError('invalid-response', 'GitHub returned malformed JSON.')
   }
 
-  return normalizeResponse(payload)
+  return normalizeGitHubRepositoryCollection(payload)
 }
