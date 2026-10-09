@@ -11,6 +11,7 @@ import { GitHubRepositoryError, fetchOrganizationRepositories } from '../../feat
 import { getRepositoryCount, getTotalForks, getTotalStars } from '../../features/repositories/model/selectors'
 import { sortRepositories, type RepositorySort } from '../../features/repositories/model/sortRepositories'
 import DashboardHeader from './components/DashboardHeader'
+import LanguageFilter from './components/LanguageFilter'
 import RepositoryKpis from './components/RepositoryKpis'
 import { getRequestState } from './requestState'
 
@@ -104,17 +105,7 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold text-slate-900">Публічні репозиторії</h2>
               <p className="mt-1 text-sm text-slate-600">Фільтр і сортування застосовуються до завантаженої вибірки.</p>
             </div>
-            <label className="font-medium text-slate-900">
-              Мова програмування
-              <select
-                value={effectiveLanguage}
-                onChange={(event) => setSelectedLanguage(event.target.value)}
-                className="mt-2 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 sm:w-auto"
-              >
-                <option value="">Усі</option>
-                {languages.map((language) => <option key={language} value={language}>{language}</option>)}
-              </select>
-            </label>
+            <LanguageFilter languages={languages} value={effectiveLanguage} onChange={setSelectedLanguage} />
           </div>
           <div className="mt-6">
             <RepositoryTable repositories={visibleRepositories} sort={sort} onSortChange={setSort} />
