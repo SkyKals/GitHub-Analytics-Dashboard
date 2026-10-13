@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   buildRepositorySearchUrl,
+  getRepositoryQueryKey,
   normalizeRepositoryQuery,
 } from '../src/features/repositories/api/buildRepositorySearchUrl.ts'
 import { fetchRepositorySearch } from '../src/features/repositories/api/fetchRepositorySearch.ts'
@@ -30,6 +31,13 @@ test('keeps an empty query constrained to the organization and omits absent filt
 
   assert.deepEqual(params, { search: '', language: '', minStars: null })
   assert.equal(new URL(buildRepositorySearchUrl(params)).searchParams.get('q'), 'org:github')
+})
+
+test('creates a stable key for equivalent validated search parameters', () => {
+  assert.equal(
+    getRepositoryQueryKey({ search: 'dashboard', language: 'TypeScript', minStars: 20 }),
+    'dashboard\u0000TypeScript\u000020',
+  )
 })
 
 test('rejects unsupported languages, malformed names, and invalid minimum stars', () => {
