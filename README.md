@@ -1,8 +1,8 @@
-# GitHub Analytics Dashboard
+﻿# Лабораторна робота №3 — GitHub Analytics Dashboard
 
-Лабораторний dashboard на React + TypeScript для пошуку публічних репозиторіїв GitHub та перегляду їхніх KPI.
+Контрольована форма фільтрів і власні хуки в React + TypeScript.
 
-## Локальний запуск
+## Запуск
 
 Потрібні Node.js `^20.19.0 || ^22.13.0 || >=24` та npm.
 
@@ -13,44 +13,67 @@ npm run dev
 
 Відкрийте адресу Vite, зазвичай `http://localhost:5173`.
 
-## Потік даних Lab 3
+## 1. Контрольована форма фільтрів
 
-Форма `RepositoryFilters` використовує `react-hook-form` і керує трьома полями:
+Форма містить назву репозиторію, мову та мінімум зірок; приклад введення: `react`, `TypeScript`, `100` ([три поля](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/features/repositories/components/filters/RepositoryFilters.tsx#L30-L66)). `Controller` із `react-hook-form` передає через `{...field}` значення `value` й обробник `onChange`, тому джерелом істини є стан форми ([приклад із коду](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/features/repositories/components/filters/RepositoryFilters.tsx#L33-L38)):
 
-- `search` — текстовий пошук за назвою, описом і власником;
-- `language` — фіксований список мов;
-- `minStars` — ціле невід’ємне число мінімальної кількості зірок.
-
-Після зміни форми застосовується debounce **400 мс** (`useDebounce`). Поки значення змінюються або не проходять валідацію, запит не запускається. `useRepositories` нормалізує параметри, будує GitHub Search API URL і скасовує застарілий запит через `AbortController`.
-
-Запит використовує максимум 100 результатів:
-
-```text
-GET https://api.github.com/search/repositories?q=...&per_page=100&page=1
+```tsx
+<Controller
+  control={control}
+  name="search"
+  rules={{ validate: (value) => !/[:<>]/.test(value) || 'Не використовуйте qualifiers GitHub у назві.' }}
+  render={({ field }) => <input {...field} id={searchId} type="search" autoComplete="off" className={fieldClassName} aria-invalid={errors.search ? 'true' : undefined} aria-describedby={errors.search ? `${searchId}-error` : undefined} />}
+/>
 ```
 
-Порожні поля не додаються до `q`; мова та `stars:>=N` додаються лише після нормалізації. Відповідь перевіряється та перетворюється на внутрішню модель `GitHubRepository`.
+## 2. Власний хук useDebounce
 
-## Поведінка dashboard
+Нові параметри застосовуються після паузи **400 мс**, а cleanup скасовує попередній таймер ([виклик](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/pages/dashboard/DashboardPage.tsx#L34-L37), [хук і затримка](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/hooks/useDebounce.ts#L3-L11)):
 
-- **loading** — показується `LoadingState`, попередні результати не видаються за нові;
-- **error** — `ErrorState` показує повторну спробу та час rate-limit, якщо GitHub надав `Retry-After` або `X-RateLimit-Reset`;
-- **empty** — `EmptyState` повідомляє, що за заданими фільтрами репозиторіїв не знайдено;
-- **success** — таблиця та KPI будуються з отриманої вибірки.
+```tsx
+const debouncedQueryKey = useDebounce(queryKey)
+```
 
-Кнопка Reset очищає всі поля й повертає базову вибірку. Retry повторює останній успішно нормалізований запит. Пізня відповідь після нового запиту не перезаписує актуальні результати.
+```ts
+useEffect(() => {
+  const timeoutId = window.setTimeout(() => setDebouncedValue(value), delay)
+  return () => window.clearTimeout(timeoutId)
+}, [delay, value])
+```
 
-Таблиця підтримує сортування за назвою та зірками. KPI рахують кількість репозиторіїв, суму зірок і суму fork-ів у повній отриманій вибірці, незалежно від локального сортування. `Counter` і `Toggle` залишаються незалежними демонстраційними компонентами попередньої лабораторної.
+## 3. Власний хук завантаження useRepositories
 
-## Структура реалізації
+Фактична назва хука — `useRepositories`: він приймає параметри пошуку та повертає `data`, `loading`, `error`, а також повторну спробу й ознаку неповної вибірки ([виклик](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/pages/dashboard/DashboardPage.tsx#L35-L38)). Хук інкапсулює [запит і стани](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/features/repositories/hooks/useRepositories.ts#L37-L69), викликаючи [fetchRepositorySearch](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/features/repositories/api/fetchRepositorySearch.ts#L22-L50); компонент показує [loading / error / empty](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/pages/dashboard/DashboardPage.tsx#L53-L56).
 
-- `src/features/repositories/components/filters/RepositoryFilters.tsx` — контрольована форма фільтрів;
-- `src/features/repositories/hooks/useRepositoryFilters.ts` — стан форми, валідація і reset;
-- `src/hooks/useDebounce.ts` — універсальна пауза 400 мс;
-- `src/features/repositories/hooks/useRepositories.ts` — життєвий цикл запиту, retry і скасування;
-- `src/features/repositories/api/buildRepositorySearchUrl.ts` — URL Search API;
-- `src/features/repositories/api/fetchOrganizationRepositories.ts` — legacy-запит базової вибірки та нормалізація GitHub-відповіді;
-- `src/pages/dashboard/DashboardPage.tsx` — зв’язує форму, debounce, API, стани, KPI й таблицю.
+```tsx
+const debouncedParams = params !== null && queryKey === debouncedQueryKey ? params : null
+const { data, loading, error, retry, incompleteResults } = useRepositories(debouncedParams)
+```
+
+## 4. Інтеграція
+
+Ланцюжок: **форма → параметри → debounce → useRepositories → таблиця та KPI** ([з’єднання в DashboardPage](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/pages/dashboard/DashboardPage.tsx#L34-L45)). Із `data` обчислюються показники та відсортовані рядки таблиці; вони передаються в [RepositoryKpis](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/pages/dashboard/DashboardPage.tsx#L55) і [RepositoryTable](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/pages/dashboard/DashboardPage.tsx#L65).
+
+```tsx
+const visibleRepositories = sortRepositories(data, sort)
+const totalStars = getTotalStars(data)
+const totalForks = getTotalForks(data)
+const repositoryCount = getRepositoryCount(data)
+```
+
+## 5. Скидання
+
+Кнопка «Скинути фільтри» викликає `onReset`, якому сторінка передає `resetFilters` ([кнопка](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/features/repositories/components/filters/RepositoryFilters.tsx#L25-L27), [підключення](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/pages/dashboard/DashboardPage.tsx#L51)). Обробник `reset(defaultValues)` очищує поля, і після debounce завантажується базова вибірка ([початкові значення](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/features/repositories/hooks/useRepositoryFilters.ts#L5-L9), [обробник](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/features/repositories/hooks/useRepositoryFilters.ts#L27)).
+
+```tsx
+<button type="button" onClick={onReset} className="min-h-11 rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-800 hover:bg-slate-50">
+  Скинути фільтри
+</button>
+```
+
+```ts
+const resetFilters = useCallback(() => reset(defaultValues), [reset])
+```
 
 ## Перевірка
 
@@ -61,4 +84,6 @@ npm run typecheck
 npm run build
 ```
 
-Тести покривають URL і валідацію фільтрів, нормалізацію відповіді, request states, retry/rate-limit, abort, сортування та KPI. Інтерактивні сценарії rapid typing/reset/stale, keyboard/focus, console та перевірка viewport потрібно підтвердити окремо у браузері.
+## Обмеження
+
+Пошук обмежений організацією `github` і першими **100 результатами**, без пагінації ([побудова URL](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/features/repositories/api/buildRepositorySearchUrl.ts#L9-L16)). KPI обчислюються за отриманою вибіркою, а не за всіма репозиторіями організації; локальне сортування не змінює їх ([обчислення](https://github.com/SkyKals/GitHub-Analytics-Dashboard/blob/lab-03/src/pages/dashboard/DashboardPage.tsx#L42-L45)).
