@@ -1,16 +1,14 @@
 import { useState } from 'react'
-import DashboardLayout from '../../components/layout/DashboardLayout'
 import EmptyState from '../../components/feedback/EmptyState'
 import ErrorState from '../../components/feedback/ErrorState'
 import LoadingState from '../../components/feedback/LoadingState'
 import Counter from '../../components/widgets/Counter'
-import Toggle from '../../components/widgets/Toggle'
 import RepositoryFilters from '../../features/repositories/components/filters/RepositoryFilters'
 import RepositoryTable from '../../features/repositories/components/table/RepositoryTable'
 import { getRepositoryQueryKey } from '../../features/repositories/api/buildRepositorySearchUrl'
 import { GitHubRepositoryError } from '../../features/repositories/api/fetchOrganizationRepositories'
 import useRepositories from '../../features/repositories/hooks/useRepositories'
-import useRepositoryFilters from '../../features/repositories/hooks/useRepositoryFilters'
+import useRepositoryFiltersContext from '../../app/providers/useRepositoryFiltersContext'
 import { getRepositoryCount, getTotalForks, getTotalStars } from '../../features/repositories/model/selectors'
 import { sortRepositories, type RepositorySort } from '../../features/repositories/model/sortRepositories'
 import useDebounce from '../../hooks/useDebounce'
@@ -31,7 +29,7 @@ function getRetryAt(error: GitHubRepositoryError): Date | undefined {
 }
 
 export default function DashboardPage() {
-  const { control, errors, params, resetFilters } = useRepositoryFilters()
+  const { params } = useRepositoryFiltersContext()
   const queryKey = params === null ? null : getRepositoryQueryKey(params)
   const debouncedQueryKey = useDebounce(queryKey)
   const debouncedParams = params !== null && queryKey === debouncedQueryKey ? params : null
@@ -45,10 +43,10 @@ export default function DashboardPage() {
   const repositoryCount = getRepositoryCount(data)
 
   return (
-    <DashboardLayout>
+    <>
       <DashboardHeader />
       <p className="text-sm text-slate-600">Організація github · до 100 публічних репозиторіїв · KPI за поточною вибіркою пошуку</p>
-      <RepositoryFilters control={control} errors={errors} onReset={resetFilters} />
+      <RepositoryFilters />
 
       {requestState === 'loading' && <LoadingState />}
       {requestState === 'error' && error && <ErrorState message={getErrorMessage(error)} retryAt={getRetryAt(error)} onRetry={retry} />}
@@ -68,7 +66,6 @@ export default function DashboardPage() {
       )}
 
       <Counter initialValue={0} />
-      <Toggle />
-    </DashboardLayout>
+    </>
   )
 }

@@ -8,7 +8,7 @@ const defaultValues: RepositoryFilterValues = {
   minStars: '',
 }
 
-type UseRepositoryFiltersResult = {
+export type UseRepositoryFiltersResult = {
   control: Control<RepositoryFilterValues>
   errors: FieldErrors<RepositoryFilterValues>
   params: RepositoryQueryParams | null
@@ -19,6 +19,7 @@ export default function useRepositoryFilters(): UseRepositoryFiltersResult {
   const { control, formState: { errors }, reset } = useForm<RepositoryFilterValues>({
     defaultValues,
     mode: 'onChange',
+    shouldUnregister: false,
   })
   const watchedValues = useWatch({ control, defaultValue: defaultValues })
   const search = watchedValues.search ?? ''
