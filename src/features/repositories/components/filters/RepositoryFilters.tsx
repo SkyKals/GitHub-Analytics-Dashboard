@@ -1,16 +1,12 @@
 import { useId } from 'react'
-import { Controller, type Control, type FieldErrors } from 'react-hook-form'
-import { repositoryLanguages, type RepositoryFilterValues } from '../../model/RepositoryQuery'
-
-type RepositoryFiltersProps = {
-  control: Control<RepositoryFilterValues>
-  errors: FieldErrors<RepositoryFilterValues>
-  onReset: () => void
-}
+import { Controller } from 'react-hook-form'
+import useRepositoryFiltersContext from '../../../../app/providers/useRepositoryFiltersContext'
+import { repositoryLanguages } from '../../model/RepositoryQuery'
 
 const fieldClassName = 'mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none'
 
-export default function RepositoryFilters({ control, errors, onReset }: RepositoryFiltersProps) {
+export default function RepositoryFilters() {
+  const { control, errors, resetFilters: onReset } = useRepositoryFiltersContext()
   const searchId = useId()
   const languageId = useId()
   const minStarsId = useId()
