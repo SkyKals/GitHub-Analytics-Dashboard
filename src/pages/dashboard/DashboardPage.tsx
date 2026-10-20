@@ -3,7 +3,6 @@ import EmptyState from '../../components/feedback/EmptyState'
 import ErrorState from '../../components/feedback/ErrorState'
 import LoadingState from '../../components/feedback/LoadingState'
 import Counter from '../../components/widgets/Counter'
-import Toggle from '../../components/widgets/Toggle'
 import RepositoryFilters from '../../features/repositories/components/filters/RepositoryFilters'
 import RepositoryTable from '../../features/repositories/components/table/RepositoryTable'
 import { getRepositoryQueryKey } from '../../features/repositories/api/buildRepositorySearchUrl'
@@ -67,7 +66,6 @@ export default function DashboardPage() {
       )}
 
       <Counter initialValue={0} />
-      <Toggle />
     </>
   )
 }

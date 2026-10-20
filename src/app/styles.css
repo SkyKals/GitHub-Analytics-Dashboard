@@ -12,4 +12,21 @@
     outline: 2px solid var(--color-blue-600);
     outline-offset: 3px;
   }
+
+  .dark body { background-color: var(--color-slate-950); color: var(--color-slate-100); }
+  .dark .bg-white { background-color: var(--color-slate-900); }
+  .dark .bg-slate-50 { background-color: var(--color-slate-800); }
+  .dark .bg-slate-100 { background-color: var(--color-slate-800); }
+  .dark .border-slate-200, .dark .border-slate-300 { border-color: var(--color-slate-700); }
+  .dark .border-slate-100 { border-color: var(--color-slate-800); }
+  .dark .text-slate-900, .dark .text-slate-800, .dark .text-slate-700 { color: var(--color-slate-100); }
+  .dark .text-slate-600, .dark .text-slate-500 { color: var(--color-slate-300); }
+  .dark .text-blue-700 { color: var(--color-blue-300); }
+  .dark .hover\:bg-slate-100:hover { background-color: var(--color-slate-700); }
+  .dark .hover\:bg-slate-50:hover { background-color: var(--color-slate-700); }
+  .dark .bg-red-50 { background-color: color-mix(in srgb, var(--color-red-950) 70%, transparent); }
+  .dark .text-red-800, .dark .text-red-700 { color: var(--color-red-200); }
+  .dark .border-red-200, .dark .border-red-300 { border-color: var(--color-red-800); }
+  .dark .bg-amber-50 { background-color: color-mix(in srgb, var(--color-amber-950) 70%, transparent); }
+  .dark .text-amber-900 { color: var(--color-amber-100); }
 }
