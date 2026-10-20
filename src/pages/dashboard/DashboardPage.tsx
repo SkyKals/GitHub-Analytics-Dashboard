@@ -8,7 +8,7 @@ import RepositoryTable from '../../features/repositories/components/table/Reposi
 import { getRepositoryQueryKey } from '../../features/repositories/api/buildRepositorySearchUrl'
 import { GitHubRepositoryError } from '../../features/repositories/api/fetchOrganizationRepositories'
 import useRepositories from '../../features/repositories/hooks/useRepositories'
-import useRepositoryFiltersContext from '../../app/providers/useRepositoryFiltersContext'
+import { useRepositoryQueryParams } from '../../features/repositories/hooks/useRepositoryFilters'
 import { getRepositoryCount, getTotalForks, getTotalStars } from '../../features/repositories/model/selectors'
 import { sortRepositories, type RepositorySort } from '../../features/repositories/model/sortRepositories'
 import useDebounce from '../../hooks/useDebounce'
@@ -29,7 +29,7 @@ function getRetryAt(error: GitHubRepositoryError): Date | undefined {
 }
 
 export default function DashboardPage() {
-  const { params } = useRepositoryFiltersContext()
+  const params = useRepositoryQueryParams()
   const queryKey = params === null ? null : getRepositoryQueryKey(params)
   const debouncedQueryKey = useDebounce(queryKey)
   const debouncedParams = params !== null && queryKey === debouncedQueryKey ? params : null

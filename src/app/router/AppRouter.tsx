@@ -3,20 +3,17 @@ import DashboardLayout from '../../components/layout/DashboardLayout'
 import DashboardPage from '../../pages/dashboard/DashboardPage'
 import NotFoundPage from '../../pages/not-found/NotFoundPage'
 import RepositoryDetailsPage from '../../pages/repository-details/RepositoryDetailsPage'
-import RepositoryFiltersProvider from '../providers/RepositoryFiltersProvider'
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
-      <RepositoryFiltersProvider>
-        <DashboardLayout>
-          <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/repository/:owner/:repo" element={<RepositoryDetailsPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </DashboardLayout>
-      </RepositoryFiltersProvider>
+      <DashboardLayout>
+        <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/repository/:owner/:repo" element={<RepositoryDetailsPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </DashboardLayout>
     </BrowserRouter>
   )
 }

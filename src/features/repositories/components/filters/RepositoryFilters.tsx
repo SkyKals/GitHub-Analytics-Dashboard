@@ -1,12 +1,12 @@
 import { useId } from 'react'
 import { Controller } from 'react-hook-form'
-import useRepositoryFiltersContext from '../../../../app/providers/useRepositoryFiltersContext'
+import useRepositoryFilters from '../../hooks/useRepositoryFilters'
 import { repositoryLanguages } from '../../model/RepositoryQuery'
 
 const fieldClassName = 'mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none'
 
 export default function RepositoryFilters() {
-  const { control, errors, resetFilters: onReset } = useRepositoryFiltersContext()
+  const { control, errors, resetFilters: onReset, setFilter } = useRepositoryFilters()
   const searchId = useId()
   const languageId = useId()
   const minStarsId = useId()
@@ -30,7 +30,7 @@ export default function RepositoryFilters() {
             control={control}
             name="search"
             rules={{ validate: (value) => !/[:<>]/.test(value) || 'Не використовуйте qualifiers GitHub у назві.' }}
-            render={({ field }) => <input {...field} id={searchId} type="search" autoComplete="off" className={fieldClassName} aria-invalid={errors.search ? 'true' : undefined} aria-describedby={errors.search ? `${searchId}-error` : undefined} />}
+            render={({ field }) => <input {...field} id={searchId} type="search" autoComplete="off" onChange={(event) => { field.onChange(event); setFilter('search', event.target.value) }} className={fieldClassName} aria-invalid={errors.search ? 'true' : undefined} aria-describedby={errors.search ? `${searchId}-error` : undefined} />}
           />
           {errors.search && <p id={`${searchId}-error`} className="mt-1 text-sm text-red-700">{errors.search.message}</p>}
         </div>
@@ -42,7 +42,7 @@ export default function RepositoryFilters() {
             name="language"
             rules={{ validate: (value) => value === '' || repositoryLanguages.includes(value as (typeof repositoryLanguages)[number]) || 'Оберіть мову зі списку.' }}
             render={({ field }) => (
-              <select {...field} id={languageId} className={fieldClassName} aria-invalid={errors.language ? 'true' : undefined} aria-describedby={errors.language ? `${languageId}-error` : undefined}>
+              <select {...field} id={languageId} onChange={(event) => { field.onChange(event); setFilter('language', event.target.value) }} className={fieldClassName} aria-invalid={errors.language ? 'true' : undefined} aria-describedby={errors.language ? `${languageId}-error` : undefined}>
                 <option value="">Усі</option>
                 {repositoryLanguages.map((language) => <option key={language} value={language}>{language}</option>)}
               </select>
@@ -57,7 +57,7 @@ export default function RepositoryFilters() {
             control={control}
             name="minStars"
             rules={{ validate: (value) => value === '' || (/^\d+$/.test(value) && Number.isSafeInteger(Number(value))) || 'Введіть невід’ємне ціле безпечне число.' }}
-            render={({ field }) => <input {...field} id={minStarsId} type="text" inputMode="numeric" className={fieldClassName} aria-invalid={errors.minStars ? 'true' : undefined} aria-describedby={errors.minStars ? `${minStarsId}-error` : undefined} />}
+            render={({ field }) => <input {...field} id={minStarsId} type="text" inputMode="numeric" onChange={(event) => { field.onChange(event); setFilter('minStars', event.target.value) }} className={fieldClassName} aria-invalid={errors.minStars ? 'true' : undefined} aria-describedby={errors.minStars ? `${minStarsId}-error` : undefined} />}
           />
           {errors.minStars && <p id={`${minStarsId}-error`} className="mt-1 text-sm text-red-700">{errors.minStars.message}</p>}
         </div>
