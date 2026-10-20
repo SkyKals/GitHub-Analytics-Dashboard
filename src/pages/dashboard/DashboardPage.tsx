@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import DashboardLayout from '../../components/layout/DashboardLayout'
 import EmptyState from '../../components/feedback/EmptyState'
 import ErrorState from '../../components/feedback/ErrorState'
 import LoadingState from '../../components/feedback/LoadingState'
@@ -45,7 +44,7 @@ export default function DashboardPage() {
   const repositoryCount = getRepositoryCount(data)
 
   return (
-    <DashboardLayout>
+    <>
       <DashboardHeader />
       <p className="text-sm text-slate-600">Організація github · до 100 публічних репозиторіїв · KPI за поточною вибіркою пошуку</p>
       <RepositoryFilters control={control} errors={errors} onReset={resetFilters} />
@@ -69,6 +68,6 @@ export default function DashboardPage() {
 
       <Counter initialValue={0} />
       <Toggle />
-    </DashboardLayout>
+    </>
   )
 }

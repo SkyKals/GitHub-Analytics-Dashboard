@@ -1,5 +1,5 @@
-import DashboardPage from '../pages/dashboard/DashboardPage'
+import AppRouter from './router/AppRouter'
 
 export default function App() {
-  return <DashboardPage />
+  return <AppRouter />
 }

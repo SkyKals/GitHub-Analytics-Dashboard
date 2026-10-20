@@ -1,4 +1,5 @@
 import type { GitHubRepository } from '../../model/GitHubRepository'
+import { Link } from 'react-router'
 import type { RepositorySort, RepositorySortField } from '../../model/sortRepositories'
 
 type RepositoryTableProps = {
@@ -53,9 +54,9 @@ export default function RepositoryTable({ repositories, sort, onSortChange }: Re
           {repositories.map((repository) => (
             <tr key={repository.id} className="text-slate-700">
               <th scope="row" className="max-w-xs px-4 py-3 font-medium">
-                <a href={repository.htmlUrl} target="_blank" rel="noreferrer" className="break-words text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                <Link to={`/repository/${repository.fullName.split('/')[0]}/${repository.name}`} className="break-words text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
                   {repository.fullName}
-                </a>
+                </Link>
               </th>
               <td className="px-4 py-3">{repository.language}</td>
               <td className="px-4 py-3 tabular-nums">{repository.stars}</td>
