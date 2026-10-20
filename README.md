@@ -75,6 +75,16 @@ const repositoryCount = getRepositoryCount(data)
 const resetFilters = useCallback(() => reset(defaultValues), [reset])
 ```
 
+## Можливості ЛР4
+
+- `/` — пошук і KPI за публічними репозиторіями організації `github`;
+- `/repository/:owner/:repo` — деталі репозиторію, issues та контриб’ютори;
+- невідомі адреси показують сторінку «Не знайдено»;
+- спільний перемикач теми доступний на кожній сторінці;
+- `RepositoryFiltersProvider` зберігає фільтри під час навігації, debounce становить 400 мс.
+
+Деталі використовують першу сторінку API до 30 issues і 30 контриб’юторів. Pull requests із відповіді issues відкидаються.
+
 ## Перевірка
 
 ```sh
@@ -82,6 +92,7 @@ node --experimental-strip-types --test tests/*.test.ts
 npm run lint
 npm run typecheck
 npm run build
+git diff --check
 ```
 
 ## Обмеження
