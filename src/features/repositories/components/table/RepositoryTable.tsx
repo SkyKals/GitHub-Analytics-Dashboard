@@ -1,5 +1,6 @@
 import type { GitHubRepository } from '../../model/GitHubRepository'
 import { Link } from 'react-router'
+import FavoriteButton from '../../../favorites/components/FavoriteButton'
 import type { RepositorySort, RepositorySortField } from '../../model/sortRepositories'
 
 type RepositoryTableProps = {
@@ -48,6 +49,7 @@ export default function RepositoryTable({ repositories, sort, onSortChange }: Re
             </th>
             <th scope="col" aria-sort="none" className="px-4 py-3 font-semibold">Форки</th>
             <th scope="col" aria-sort="none" className="px-4 py-3 font-semibold">ID</th>
+            <th scope="col" aria-sort="none" className="px-4 py-3 font-semibold">Обране</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -62,6 +64,7 @@ export default function RepositoryTable({ repositories, sort, onSortChange }: Re
               <td className="px-4 py-3 tabular-nums">{repository.stars}</td>
               <td className="px-4 py-3 tabular-nums">{repository.forks}</td>
               <td className="px-4 py-3 tabular-nums">{repository.id}</td>
+              <td className="px-4 py-3"><FavoriteButton repositoryId={repository.id} /></td>
             </tr>
           ))}
         </tbody>
