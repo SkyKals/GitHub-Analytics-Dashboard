@@ -3,6 +3,7 @@ import EmptyState from '../../components/feedback/EmptyState'
 import ErrorState from '../../components/feedback/ErrorState'
 import LoadingState from '../../components/feedback/LoadingState'
 import Counter from '../../components/widgets/Counter'
+import RepositoryAnalytics from '../../features/analytics/components/RepositoryAnalytics'
 import RepositoryFilters from '../../features/repositories/components/filters/RepositoryFilters'
 import RepositoryTable from '../../features/repositories/components/table/RepositoryTable'
 import { getRepositoryQueryKey } from '../../features/repositories/api/buildRepositorySearchUrl'
@@ -51,6 +52,8 @@ export default function DashboardPage() {
       {requestState === 'loading' && <LoadingState />}
       {requestState === 'error' && error && <ErrorState message={getErrorMessage(error)} retryAt={getRetryAt(error)} onRetry={retry} />}
       {(requestState === 'empty' || requestState === 'success') && <RepositoryKpis totalStars={totalStars} totalForks={totalForks} repositoryCount={repositoryCount} />}
+      {requestState === 'success' && incompleteResults && <p role="status" className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">GitHub повернув неповну вибірку; показники й графік обчислено за отриманими даними.</p>}
+      {(requestState === 'empty' || requestState === 'success') && <RepositoryAnalytics repositories={data} />}
       {requestState === 'empty' && <EmptyState message="За заданими фільтрами репозиторіїв не знайдено." />}
       {requestState === 'success' && (
         <section aria-label="Таблиця репозиторіїв" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -58,7 +61,6 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-slate-900">Публічні репозиторії</h2>
             <p className="mt-1 text-sm text-slate-600">Сортування не змінює параметри пошуку або показники.</p>
           </div>
-          {incompleteResults && <p role="status" className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">GitHub повернув неповну вибірку; показники обчислено за отриманими даними.</p>}
           <div className="mt-6">
             <RepositoryTable repositories={visibleRepositories} sort={sort} onSortChange={setSort} />
           </div>
