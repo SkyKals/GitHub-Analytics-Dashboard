@@ -1,74 +1,24 @@
-# Лабораторна робота №4 — GitHub Analytics Dashboard
+# Лабораторна робота №5 — GitHub Analytics Dashboard
 
-Багатосторінковий дашборд репозиторіїв GitHub на React + TypeScript.
+Дашборд публічних репозиторіїв організації `github` на React і TypeScript. ЛР5 переносить спільний стан у Zustand, додає обране та графік кількості репозиторіїв за основною мовою.
 
-## Завдання викладача
+## Виконання завдань ЛР5
 
-**Мета.** Навчитися будувати багатосторінковий інтерфейс за допомогою React Router, реалізувати дрілдаун (перехід зі списку до деталей елемента) та усунути prop drilling через React Context.
+1. **Підключення менеджера стану.** Додано Zustand store із селекторами. У ньому зберігаються активні фільтри й пошук, ID обраних репозиторіїв, тема та вибраний тип графіка. Дані GitHub завантажуються наявними API-хуками; окремий глобальний кеш не потрібен. Код: [store і дії](src/store/dashboardStore.ts), [React-селектор](src/store/useDashboardStore.ts), [тести контракту](tests/dashboardStore.test.ts).
+2. **Рефакторинг стану.** Старі Context для теми й фільтрів прибрано. Компоненти читають потрібні значення через селектори та змінюють їх діями store без прямої мутації. Стан запиту, помилки й локальне сортування залишаються біля компонентів, які ними керують. Код: [синхронізація теми в App](src/app/App.tsx), [перемикач теми](src/features/theme/components/ThemeToggle.tsx), [адаптер фільтрів](src/features/repositories/hooks/useRepositoryFilters.ts), [сторінка дашборду](src/pages/dashboard/DashboardPage.tsx).
+3. **Обране (Favorites).** Кнопка додає або вилучає репозиторій з обраного за його числовим GitHub ID. Стан одразу видно в таблиці на головній сторінці та на сторінці деталей; натискання не надсилає запит до GitHub. Код: [FavoriteButton](src/features/favorites/components/FavoriteButton.tsx), [колонка таблиці](src/features/repositories/components/table/RepositoryTable.tsx), [кнопка в деталях](src/pages/repository-details/RepositoryDetailsPage.tsx), [тести дії store](tests/dashboardStore.test.ts).
+4. **Графічний віджет.** Recharts показує кількість репозиторіїв за їхньою основною мовою в поточній відповіді пошуку. Точні значення дублюються текстовим переліком. Порожня вибірка має окреме повідомлення замість порожньої кругової діаграми. Код: [групування мов](src/features/analytics/model/groupRepositoriesByLanguage.ts), [LanguageChart](src/features/analytics/components/LanguageChart.tsx), [підключення до вибірки](src/features/analytics/components/RepositoryAnalytics.tsx), [тести групування](tests/languageAnalytics.test.ts).
+5. **Перемикання типів графіка.** Кнопки «Стовпчики» й «Кругова» перемикають два види тих самих даних. Тип зберігається у Zustand store протягом поточного запуску. Зміна фільтрів оновлює дані графіка після нового запиту; сортування таблиці їх не змінює. Код: [ChartTypeToggle](src/features/analytics/components/ChartTypeToggle.tsx), [bar/pie у LanguageChart](src/features/analytics/components/LanguageChart.tsx), [зв’язок зі store](src/features/analytics/components/RepositoryAnalytics.tsx), [передавання поточної вибірки](src/pages/dashboard/DashboardPage.tsx).
 
+Збережено можливості попередніх лабораторних: на `/` доступні пошук за назвою, фільтри мови й мінімальних зірок, KPI та сортування. Запит після зміни фільтрів має затримку 400 мс; невалідні значення показують помилку без нового запиту. Назва репозиторію веде на `/repository/:owner/:repo` з деталями, issues і контриб’юторами. Невідомий маршрут показує сторінку 404; для мережевих помилок є повторна спроба. Тема діє на всіх маршрутах.
 
-**Потрібно реалізувати:**
+Стан store існує **лише в пам’яті**: localStorage, sessionStorage і persistence не використовуються. Перехід між маршрутами зберігає стан поточного запуску. Повне перезавантаження повертає порожні фільтри й обране, світлу тему та стовпчиковий графік.
 
-- налаштувати React Router v7 для головної та сторінки деталей;
-- зробити дрілдаун зі списку на деталі через параметри маршруту й `useParams`;
-- показати розширені дані елемента та посилання «Назад» до головної;
-- створити `ThemeContext` зі світлою/темною темою та перемикачем на всіх сторінках;
-- за потреби винести активні фільтри/пошук у власний Context;
-- обробити випадок неіснуючого ідентифікатора.
+## Межі даних
 
-**Вимоги:** навігація виконується через `Link`/`NavLink` або програмну навігацію без перезавантаження; ідентифікатор береться з параметра маршруту; тема й фільтри читаються через `useContext` без prop drilling; провайдери обгортають дерево через `children`.
+Пошук обмежений організацією `github` і першою сторінкою до **100** репозиторіїв; пагінації немає. KPI й графік обчислюються лише за отриманою вибіркою, а не за всіма репозиторіями організації. Один репозиторій додає одиницю до своєї основної мови; мова без значення позначена «Не вказано». Якщо GitHub повідомляє про неповні результати, дашборд показує попередження для показників і графіка.
 
-**Критерії оцінювання:** налаштований Router і маршрути — 2 бали; дрілдаун — 1; сторінка деталей і «Назад» — 2; `ThemeContext` і перемикач — 2; обробка неіснуючого id — 1. Разом — 8 балів.
-
-## Як виконано
-
-### 1. Маршрутизація
-
-Підключено точну залежність `react-router@7.18.4`.
-
-`AppRouter` налаштовує три маршрути:
-
-- `/` — головний дашборд;
-- `/repository/:owner/:repo` — деталі репозиторію GitHub;
-- `*` — сторінка «Не знайдено».
-
-Спільний `DashboardLayout` залишається змонтованим під час навігації. Реалізація: [`AppRouter.tsx`](src/app/router/AppRouter.tsx), [`App.tsx`](src/app/App.tsx), [`DashboardLayout.tsx`](src/components/layout/DashboardLayout.tsx).
-
-### 2. Дрілдаун і сторінка деталей
-
-Назва репозиторію в таблиці є внутрішнім `Link` на `/repository/:owner/:repo`. `RepositoryDetailsPage` отримує `owner` і `repo` тільки через `useParams`, тому працює при прямому відкритті та перезавантаженні URL.
-
-Сторінка деталей показує опис, власника, основну гілку, ліцензію, дати, зовнішнє посилання GitHub, відкриті issues і контриб’юторів. Посилання «Назад до дашборду» веде на `/`.
-
-Реалізація: [`RepositoryTable.tsx`](src/features/repositories/components/table/RepositoryTable.tsx), [`RepositoryDetailsPage.tsx`](src/pages/repository-details/RepositoryDetailsPage.tsx), [`useRepositoryDetails.ts`](src/features/repositories/hooks/useRepositoryDetails.ts).
-
-API використовує:
-
-- `GET /repos/{owner}/{repo}`;
-- `GET /repos/{owner}/{repo}/issues?state=open&sort=created&direction=desc&per_page=30&page=1`;
-- `GET /repos/{owner}/{repo}/contributors?per_page=30&page=1&anon=false`.
-
-URL-сегменти кодуються окремо, відповіді перевіряються під час виконання, pull requests із відповіді issues відкидаються. Помилка основного запиту показує «Репозиторій не знайдено» для HTTP 404; помилка issues або контриб’юторів не приховує успішну сусідню секцію.
-
-### 3. ThemeContext
-
-`ThemeProvider` з початковою світлою темою обгортає весь застосунок. `ThemeToggle` читає `theme` і викликає `toggleTheme()` через `useTheme`; клас `dark` застосовується до кореня документа. Темне оформлення охоплює layout, поля, таблицю, картки, повідомлення, сторінку деталей і 404.
-
-Реалізація: [`ThemeProvider.tsx`](src/features/theme/context/ThemeProvider.tsx), [`themeContext.ts`](src/features/theme/context/themeContext.ts), [`useTheme.ts`](src/features/theme/context/useTheme.ts), [`ThemeToggle.tsx`](src/features/theme/components/ThemeToggle.tsx).
-
-### 4. Context фільтрів
-
-`RepositoryFiltersProvider` викликає `useRepositoryFilters` один раз і монтується над маршрутами. Dashboard і форма фільтрів отримують `control`, `errors`, `params` і `resetFilters` через `useRepositoryFiltersContext`, без передачі цих props через проміжні компоненти.
-
-Збережено три контрольовані поля `react-hook-form`, валідацію, reset, debounce 400 мс, єдину вибірку для таблиці та KPI. `shouldUnregister: false` зберігає введення під час переходів між сторінками.
-
-Реалізація: [`RepositoryFiltersProvider.tsx`](src/app/providers/RepositoryFiltersProvider.tsx), [`useRepositoryFiltersContext.ts`](src/app/providers/useRepositoryFiltersContext.ts), [`RepositoryFilters.tsx`](src/features/repositories/components/filters/RepositoryFilters.tsx).
-
-### 5. Неіснуючі адреси та помилки
-
-Невідомий маршрут показує сторінку «Сторінку не знайдено» з посиланням на `/`. Неіснуючий репозиторій показує зрозуміле повідомлення, окрему обробку 404, кнопку повторної спроби та не залишає застарілі дані після зміни URL.
-
-Реалізація: [`NotFoundPage.tsx`](src/pages/not-found/NotFoundPage.tsx), [`repositoryDetailsApi.ts`](src/features/repositories/api/repositoryDetailsApi.ts).
+Сторінка деталей запитує до **30** відкритих issues і до **30** контриб’юторів з перших сторінок відповідних API. Помилка одного з цих двох списків не приховує інший. Обране є локальною позначкою у store, а не GitHub stars чи API-записом.
 
 ## Запуск
 
@@ -79,7 +29,7 @@ npm ci
 npm run dev
 ```
 
-Відкрийте адресу Vite, зазвичай `http://localhost:5173`.
+Відкрийте адресу, яку виведе Vite (зазвичай `http://localhost:5173`). Запити до публічного GitHub API залежать від мережі та його лімітів.
 
 ## Перевірка
 
@@ -91,8 +41,10 @@ npm run build
 git diff --check
 ```
 
-Результат локальної перевірки: 23/23 тестів пройшли, lint/typecheck/build/diff check успішні.
+Ці команди перевіряють наявні автоматичні тести, ESLint, типи, production build і пробіли в diff. Фактичні результати поточної лабораторної та неперевірені сценарії записуються окремо в локальному звіті задачі; сам README не є висновком review.
 
-## Обмеження
+Для ручної перевірки відкрийте головну й деталі, змініть усі три фільтри, перевірте помилки валідації та скидання; додайте й приберіть обране в таблиці та деталях; перемкніть bar/pie і тему, перейдіть між маршрутами та перезавантажте сторінку. Перевірте loading, empty, error/retry, клавіатуру й фокус, читабельність у світлій і темній темах та нові компоненти при ширині 1280 і 375 px.
 
-Пошук залишається обмеженим організацією `github` і першими 100 результатами без пагінації. Деталі використовують першу сторінку до 30 issues і 30 контриб’юторів. Обране, централізований store, графіки, пагінація та дизайн-система не входять до ЛР4.
+## Відомі обмеження
+
+Ручні браузерні сценарії потребують окремої фактичної перевірки перед фінальним висновком. Успадкована від ЛР4 таблиця може мати горизонтальне переповнення на вузькому екрані; ця робота його не змінює. Кеш, авторизація, сторінка обраного й пагінація не реалізовані.
