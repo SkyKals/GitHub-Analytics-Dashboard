@@ -33,6 +33,13 @@ npm run dev
 
 ## Перевірка
 
+### Повторна перевірка після рев’ю (код `aff3e71`)
+
+- `node --experimental-strip-types --test tests/*.test.ts`: 36/36; lint, typecheck, build і `git diff --check`: успішно. Build має попередження про chunk понад 500 kB.
+- Chrome, bar і pie на 320/375/768/1280 px: документ 305/360/753/1265 px, графік 273/328/705/1088 px; контейнер таблиці 223/278/655/1038 px, вміст 749/749/749/1038 px.
+- У браузері перевірено `bad:name` та `minStars=1.5`: повідомлення біля поля й `aria-invalid=true`, без запиту й успішного empty. Reset очищує поля; сире значення пошуку зберігається після внутрішнього переходу на деталі та назад.
+- Контрольовані HTTP error → retry та `incompleteResults` у браузері не відтворено. `node:test` перевіряє нормалізацію `incomplete_results` і HTTP-помилки API; UI показує попередження тільки для успішної відповіді поточного ключа запиту.
+
 ```sh
 node --experimental-strip-types --test tests/*.test.ts
 npm run lint
