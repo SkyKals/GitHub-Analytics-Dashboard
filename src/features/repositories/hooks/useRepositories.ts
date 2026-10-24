@@ -3,12 +3,22 @@ import { fetchRepositorySearch } from '../api/fetchRepositorySearch'
 import { GitHubRepositoryError } from '../api/fetchOrganizationRepositories'
 import type { GitHubRepository } from '../model/GitHubRepository'
 import type { RepositoryQueryParams } from '../model/RepositoryQuery'
+import { getRepositoryQueryKey } from '../api/buildRepositorySearchUrl'
 
 type UseRepositoriesResult = {
   data: GitHubRepository[]
   loading: boolean
   error: GitHubRepositoryError | null
   retry: () => void
+  incompleteResults: boolean
+  status: 'idle' | 'loading' | 'success' | 'error'
+}
+
+type RequestSnapshot = {
+  key: string
+  status: 'loading' | 'success' | 'error'
+  data: GitHubRepository[]
+  error: GitHubRepositoryError | null
   incompleteResults: boolean
 }
 
@@ -22,10 +32,7 @@ function toRepositoryError(error: unknown): GitHubRepositoryError {
 }
 
 export default function useRepositories(params: RepositoryQueryParams | null): UseRepositoriesResult {
-  const [data, setData] = useState<GitHubRepository[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<GitHubRepositoryError | null>(null)
-  const [incompleteResults, setIncompleteResults] = useState(false)
+  const [snapshot, setSnapshot] = useState<RequestSnapshot | null>(null)
   const [retryAttempt, setRetryAttempt] = useState(0)
 
   const retry = useCallback(() => setRetryAttempt((attempt) => attempt + 1), [])
@@ -33,6 +40,7 @@ export default function useRepositories(params: RepositoryQueryParams | null): U
   const search = params?.search
   const language = params?.language
   const minStars = params?.minStars
+  const key = params === null ? null : getRepositoryQueryKey(params)
 
   useEffect(() => {
     if (!enabled || search === undefined || language === undefined || minStars === undefined) return
@@ -40,20 +48,16 @@ export default function useRepositories(params: RepositoryQueryParams | null): U
     const controller = new AbortController()
     let current = true
     const load = async () => {
-      setData([])
-      setLoading(true)
-      setError(null)
-      setIncompleteResults(false)
+      if (key !== null) setSnapshot({ key, status: 'loading', data: [], error: null, incompleteResults: false })
 
       try {
         const result = await fetchRepositorySearch({ search, language, minStars }, controller.signal)
         if (!current) return
-        setData(result.items)
-        setIncompleteResults(result.incompleteResults)
+        if (key !== null) setSnapshot({ key, status: 'success', data: result.items, error: null, incompleteResults: result.incompleteResults })
       } catch (requestError) {
-        if (current && !isAbortError(requestError)) setError(toRepositoryError(requestError))
-      } finally {
-        if (current) setLoading(false)
+        if (current && !isAbortError(requestError) && key !== null) {
+          setSnapshot({ key, status: 'error', data: [], error: toRepositoryError(requestError), incompleteResults: false })
+        }
       }
     }
 
@@ -63,8 +67,9 @@ export default function useRepositories(params: RepositoryQueryParams | null): U
       current = false
       controller.abort()
     }
-  }, [enabled, language, minStars, retryAttempt, search])
+  }, [enabled, key, language, minStars, retryAttempt, search])
 
-  if (!enabled) return { data: [], loading: false, error: null, retry, incompleteResults: false }
-  return { data, loading, error, retry, incompleteResults }
+  if (!enabled || key === null) return { data: [], loading: false, error: null, retry, incompleteResults: false, status: 'idle' }
+  if (snapshot?.key !== key) return { data: [], loading: true, error: null, retry, incompleteResults: false, status: 'loading' }
+  return { ...snapshot, loading: snapshot.status === 'loading', retry }
 }

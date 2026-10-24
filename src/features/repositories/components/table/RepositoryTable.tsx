@@ -22,7 +22,7 @@ function getAriaSort(sort: RepositorySort, field: RepositorySortField): 'ascendi
 
 export default function RepositoryTable({ repositories, sort, onSortChange }: RepositoryTableProps) {
   return (
-    <div className="max-w-full overflow-x-auto" tabIndex={0}>
+    <div className="min-w-0 max-w-full overflow-x-auto" tabIndex={0}>
       <table className="min-w-[40rem] w-full border-collapse text-left text-sm">
         <caption className="sr-only">Публічні репозиторії GitHub</caption>
         <thead className="border-b border-slate-200 text-slate-600">
