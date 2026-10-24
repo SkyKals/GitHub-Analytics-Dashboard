@@ -77,6 +77,12 @@ const resetFilters = useCallback(() => reset(defaultValues), [reset])
 
 ## Перевірка
 
+### Повторна перевірка після рев’ю (код `3fb1dd2`)
+
+- `node --experimental-strip-types --test tests/*.test.ts`: 21/21; lint, typecheck, build і `git diff --check`: успішно.
+- Chrome, 320/375/768/1280 px: документ 305/360/753/1265 px; контейнер таблиці 223/278/655/1038 px, вміст 640/640/655/1038 px. Форма та KPI не виходять за viewport.
+- У браузері перевірено `minStars=-1` (помилка поля, без результатів), зміну пошуку під час debounce (loading без старих KPI й таблиці), підтверджений порожній пошук (KPI 0/0/0). Запізнілу відповідь старого запиту й error → retry з контрольованим API у браузері не відтворено; відсікання старої відповіді забезпечує ключ поточного запиту і cleanup effect.
+
 ```sh
 node --experimental-strip-types --test tests/*.test.ts
 npm run lint
