@@ -48,12 +48,12 @@ test('normalizes GitHub repository fields and accepts an empty page', async () =
   }
 })
 
-test('reports HTTP failures with status and retry timing', async () => {
+test('reports a proven primary rate limit and its reset time', async () => {
   const originalFetch = globalThis.fetch
   globalThis.fetch = async () =>
     new Response('', {
       status: 429,
-      headers: { 'retry-after': '30', 'x-ratelimit-reset': '2000000000' },
+      headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '2000000000' },
     })
 
   try {
@@ -63,7 +63,8 @@ test('reports HTTP failures with status and retry timing', async () => {
         assert(error instanceof GitHubRepositoryError)
         assert.equal(error.kind, 'http')
         assert.equal(error.status, 429)
-        assert.equal(error.retryAfterSeconds, 30)
+        assert.equal(error.rateLimitKind, 'primary')
+        assert.equal(error.retryAfterSeconds, undefined)
         assert.equal(error.rateLimitResetAt?.getTime(), 2000000000 * 1000)
         return true
       },
@@ -71,6 +72,40 @@ test('reports HTTP failures with status and retry timing', async () => {
   } finally {
     globalThis.fetch = originalFetch
   }
+})
+
+test('does not infer a rate limit from reset or retry headers on an ordinary 403', async () => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () => new Response('', {
+    status: 403,
+    headers: { 'x-ratelimit-remaining': '12', 'x-ratelimit-reset': '2000000000', 'retry-after': '30' },
+  })
+  try {
+    await assert.rejects(fetchOrganizationRepositories(new AbortController().signal), (error: unknown) => {
+      assert(error instanceof GitHubRepositoryError)
+      assert.equal(error.rateLimitKind, undefined)
+      assert.equal(error.rateLimitResetAt, undefined)
+      assert.equal(error.retryAfterSeconds, undefined)
+      return true
+    })
+  } finally { globalThis.fetch = originalFetch }
+})
+
+test('recognizes a secondary limit from its message and ignores malformed timing', async () => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () => new Response(JSON.stringify({ message: 'You have exceeded a secondary rate limit.' }), {
+    status: 429,
+    headers: { 'x-ratelimit-remaining': '10', 'retry-after': 'not-a-date', 'x-ratelimit-reset': 'broken' },
+  })
+  try {
+    await assert.rejects(fetchOrganizationRepositories(new AbortController().signal), (error: unknown) => {
+      assert(error instanceof GitHubRepositoryError)
+      assert.equal(error.rateLimitKind, 'secondary')
+      assert.equal(error.retryAfterSeconds, undefined)
+      assert.equal(error.rateLimitResetAt, undefined)
+      return true
+    })
+  } finally { globalThis.fetch = originalFetch }
 })
 
 test('keeps ordinary HTTP failures separate from rate-limit timing', async () => {

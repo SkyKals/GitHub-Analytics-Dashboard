@@ -26,6 +26,8 @@ function toRepositoryError(error: unknown): GitHubRepositoryError {
 
 function getErrorMessage(error: GitHubRepositoryError): string {
   if (error.kind === 'http') {
+    if (error.rateLimitKind === 'primary') return 'Вичерпано основний ліміт запитів GitHub API.'
+    if (error.rateLimitKind === 'secondary') return 'Досягнуто вторинного ліміту запитів GitHub API.'
     return `Не вдалося завантажити репозиторії (HTTP ${error.status ?? 'невідома помилка'}).`
   }
   if (error.kind === 'invalid-response') {
@@ -35,9 +37,10 @@ function getErrorMessage(error: GitHubRepositoryError): string {
 }
 
 function getRetryAt(error: GitHubRepositoryError): Date | undefined {
-  if (error.rateLimitResetAt) return error.rateLimitResetAt
-  if (error.retryAfterSeconds === undefined) return undefined
-  return new Date(Date.now() + error.retryAfterSeconds * 1000)
+  if (error.rateLimitKind === 'primary') return error.rateLimitResetAt
+  if (error.rateLimitKind !== 'secondary') return undefined
+  if (error.retryAfterSeconds !== undefined) return new Date(Date.now() + error.retryAfterSeconds * 1000)
+  return error.rateLimitResetAt
 }
 
 export default function DashboardPage() {
@@ -99,7 +102,7 @@ export default function DashboardPage() {
       )}
       {requestState === 'empty' && <EmptyState />}
       {requestState === 'success' && (
-        <section aria-label="Таблиця репозиторіїв" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section aria-label="Таблиця репозиторіїв" className="min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Публічні репозиторії</h2>
@@ -107,7 +110,7 @@ export default function DashboardPage() {
             </div>
             <LanguageFilter languages={languages} value={effectiveLanguage} onChange={setSelectedLanguage} />
           </div>
-          <div className="mt-6">
+          <div className="mt-6 min-w-0 max-w-full">
             <RepositoryTable repositories={visibleRepositories} sort={sort} onSortChange={setSort} />
           </div>
         </section>
