@@ -31,7 +31,7 @@ export async function fetchRepositorySearch(
     throw new GitHubRepositoryError('network', 'The GitHub repository search request failed.')
   }
 
-  if (!response.ok) throw createGitHubHttpError(response)
+  if (!response.ok) throw await createGitHubHttpError(response)
 
   let payload: unknown
   try {

@@ -92,12 +92,13 @@ test('preserves HTTP retry timing and abort behavior for repository search', asy
   try {
     globalThis.fetch = async () => new Response('', {
       status: 429,
-      headers: { 'retry-after': '30', 'x-ratelimit-reset': '2000000000' },
+      headers: { 'retry-after': '30', 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '2000000000' },
     })
     await assert.rejects(fetchRepositorySearch(params, new AbortController().signal), (error: unknown) => {
       assert(error instanceof GitHubRepositoryError)
       assert.equal(error.kind, 'http')
       assert.equal(error.status, 429)
+      assert.equal(error.rateLimitKind, 'primary')
       assert.equal(error.retryAfterSeconds, 30)
       assert.equal(error.rateLimitResetAt?.getTime(), 2000000000 * 1000)
       return true
