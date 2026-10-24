@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useForm, type Control, type FieldErrors } from 'react-hook-form'
 import { useDashboardStore } from '../../../store/useDashboardStore'
 import { normalizeRepositoryFilters, type RepositoryFilterValues, type RepositoryQueryParams } from '../model/RepositoryQuery'
@@ -28,12 +28,15 @@ export default function useRepositoryFilters(): UseRepositoryFiltersResult {
   const filters = useDashboardStore((state) => state.filters)
   const resetStoreFilters = useDashboardStore((state) => state.resetFilters)
   const setFilter = useDashboardStore((state) => state.setFilter)
-  const { control, formState: { errors }, reset } = useForm<RepositoryFilterValues>({
+  const { control, formState: { errors }, reset, trigger } = useForm<RepositoryFilterValues>({
     defaultValues: filters,
     mode: 'onChange',
     shouldUnregister: false,
   })
   const params = useMemo(() => normalizeFilters(filters), [filters])
+  useEffect(() => {
+    if (params === null) void trigger()
+  }, [params, trigger])
   const resetFilters = useCallback(() => {
     resetStoreFilters()
     reset({ search: '', language: '', minStars: '' })
