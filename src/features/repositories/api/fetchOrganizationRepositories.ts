@@ -9,12 +9,14 @@ const GITHUB_HEADERS = {
 }
 
 export type GitHubRepositoryErrorKind = 'network' | 'http' | 'invalid-response'
+export type RateLimitKind = 'primary' | 'secondary'
 
 export class GitHubRepositoryError extends Error {
   readonly kind: GitHubRepositoryErrorKind
   readonly status?: number
   readonly retryAfterSeconds?: number
   readonly rateLimitResetAt?: Date
+  readonly rateLimitKind?: RateLimitKind
 
   constructor(
     kind: GitHubRepositoryErrorKind,
@@ -23,6 +25,7 @@ export class GitHubRepositoryError extends Error {
       status?: number
       retryAfterSeconds?: number
       rateLimitResetAt?: Date
+      rateLimitKind?: RateLimitKind
     } = {},
   ) {
     super(message)
@@ -31,6 +34,7 @@ export class GitHubRepositoryError extends Error {
     this.status = details.status
     this.retryAfterSeconds = details.retryAfterSeconds
     this.rateLimitResetAt = details.rateLimitResetAt
+    this.rateLimitKind = details.rateLimitKind
   }
 }
 
@@ -57,14 +61,27 @@ function parseRateLimitReset(value: string | null): Date | undefined {
   const seconds = Number(value)
   if (!Number.isInteger(seconds) || seconds < 0) return undefined
 
-  return new Date(seconds * 1000)
+  const date = new Date(seconds * 1000)
+  return Number.isNaN(date.getTime()) ? undefined : date
 }
 
-export function createGitHubHttpError(response: Response): GitHubRepositoryError {
+export async function createGitHubHttpError(response: Response): Promise<GitHubRepositoryError> {
+  const limitedStatus = response.status === 403 || response.status === 429
+  const primaryLimit = limitedStatus && response.headers.get('x-ratelimit-remaining') === '0'
+  let secondaryLimit = false
+  if (limitedStatus && !primaryLimit) {
+    try {
+      const body: unknown = await response.clone().json()
+      secondaryLimit = isRecord(body) && typeof body.message === 'string' && /secondary rate limit/i.test(body.message)
+    } catch { /* An HTTP error body may be empty or malformed. */ }
+  }
+  const rateLimitKind = primaryLimit ? 'primary' : secondaryLimit ? 'secondary' : undefined
   return new GitHubRepositoryError('http', `GitHub returned HTTP ${response.status}.`, {
     status: response.status,
-    retryAfterSeconds: parseRetryAfter(response.headers.get('retry-after')),
-    rateLimitResetAt: parseRateLimitReset(response.headers.get('x-ratelimit-reset')),
+    rateLimitKind,
+    retryAfterSeconds: rateLimitKind ? parseRetryAfter(response.headers.get('retry-after')) : undefined,
+    rateLimitResetAt: rateLimitKind && response.headers.get('x-ratelimit-remaining') === '0'
+      ? parseRateLimitReset(response.headers.get('x-ratelimit-reset')) : undefined,
   })
 }
 
@@ -125,7 +142,7 @@ export async function fetchOrganizationRepositories(signal: AbortSignal): Promis
     throw new GitHubRepositoryError('network', 'The GitHub repository request failed.', { })
   }
 
-  if (!response.ok) throw createGitHubHttpError(response)
+  if (!response.ok) throw await createGitHubHttpError(response)
 
   let payload: unknown
   try {

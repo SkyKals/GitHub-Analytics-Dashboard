@@ -28,17 +28,16 @@ export default function useRepositoryFilters(): UseRepositoryFiltersResult {
   const filters = useDashboardStore((state) => state.filters)
   const resetStoreFilters = useDashboardStore((state) => state.resetFilters)
   const setFilter = useDashboardStore((state) => state.setFilter)
-  const { clearErrors, control, formState: { errors } } = useForm<RepositoryFilterValues>({
-    values: filters,
+  const { control, formState: { errors }, reset } = useForm<RepositoryFilterValues>({
+    defaultValues: filters,
     mode: 'onChange',
-    resetOptions: { keepErrors: true, keepTouched: true },
     shouldUnregister: false,
   })
   const params = useMemo(() => normalizeFilters(filters), [filters])
   const resetFilters = useCallback(() => {
     resetStoreFilters()
-    clearErrors()
-  }, [clearErrors, resetStoreFilters])
+    reset({ search: '', language: '', minStars: '' })
+  }, [reset, resetStoreFilters])
 
   return { control, errors, params, resetFilters, setFilter }
 }

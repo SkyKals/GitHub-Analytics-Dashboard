@@ -20,17 +20,22 @@ function toError(error: unknown): GitHubRepositoryError {
 }
 
 export default function useRepositoryDetails(owner: string, repo: string): RepositoryDetailsResult {
-  const [repository, setRepository] = useState<Resource<RepositoryDetails>>(emptyResource)
+  const [repository, setRepository] = useState<Resource<RepositoryDetails>>({ data: null, loading: true, error: null })
+  const [loadedKey, setLoadedKey] = useState(`${owner}/${repo}`)
   const [issues, setIssues] = useState<Resource<RepositoryIssue[]>>(emptyResource)
   const [contributors, setContributors] = useState<Resource<RepositoryContributor[]>>(emptyResource)
   const [retryAttempt, setRetryAttempt] = useState(0)
-  const retry = useCallback(() => setRetryAttempt((attempt) => attempt + 1), [])
+  const retry = useCallback(() => {
+    setRepository({ data: null, loading: true, error: null })
+    setRetryAttempt((attempt) => attempt + 1)
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
     let current = true
     queueMicrotask(() => {
       if (!current) return
+      setLoadedKey(`${owner}/${repo}`)
       setRepository({ data: null, loading: true, error: null })
       setIssues(emptyResource())
       setContributors(emptyResource())
@@ -56,5 +61,5 @@ export default function useRepositoryDetails(owner: string, repo: string): Repos
     return () => { current = false; controller.abort() }
   }, [owner, repo, retryAttempt])
 
-  return { repository, issues, contributors, retry }
+  return { repository: loadedKey === `${owner}/${repo}` ? repository : { data: null, loading: true, error: null }, issues, contributors, retry }
 }

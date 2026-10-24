@@ -42,9 +42,9 @@ export default function LanguageChart({ data, type }: LanguageChartProps): React
   }
 
   return (
-    <section aria-label="Графік мов" className="min-w-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <section aria-label="Графік мов" className="min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Мови репозиторіїв</h2>
-      <div className="mt-4 h-80 min-w-0">
+      <div className="mt-4 h-80 min-w-0 max-w-full overflow-hidden">
         <ResponsiveContainer width="100%" height="100%">
           {type === 'bar' ? (
             <BarChart data={data} margin={{ top: 12, right: 16, bottom: 8, left: 0 }}>

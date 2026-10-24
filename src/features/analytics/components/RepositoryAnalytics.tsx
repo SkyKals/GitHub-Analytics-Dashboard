@@ -15,9 +15,9 @@ export default function RepositoryAnalytics({ repositories }: RepositoryAnalytic
   const data = groupRepositoriesByLanguage(repositories)
 
   return (
-    <section aria-label="Аналітика мов" className="min-w-0">
+    <section aria-label="Аналітика мов" className="min-w-0 max-w-full overflow-hidden">
       <ChartTypeToggle value={chartType} onChange={setChartType} />
-      <div className="mt-4 min-w-0">
+      <div className="mt-4 min-w-0 max-w-full">
         <LanguageChart data={data} type={chartType} />
       </div>
     </section>
